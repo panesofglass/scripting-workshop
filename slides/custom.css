@@ -1,0 +1,10 @@
+.reveal section img.logo {
+    float: left;
+    margin-left: 80px; 
+    margin-bottom: 50px;
+}
+.reveal section img.image-row {
+    float: left;
+    margin-left: 40px;
+    max-height: 400px;
+}

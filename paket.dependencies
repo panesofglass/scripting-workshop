@@ -1,4 +1,23 @@
 source https://nuget.org/api/v2
+framework: net461
 
-nuget FsReveal
-nuget FAKE
+nuget FSharp.Core
+nuget Suave
+
+group Build
+    source https://nuget.org/api/v2
+
+    nuget FsReveal
+    nuget FAKE
+
+group Completed
+    source https://nuget.org/api/v2
+    framework: net461
+
+    nuget Argu
+    nuget Expecto
+    nuget Expecto.BenchmarkDotNet
+    nuget Expecto.FsCheck
+    nuget FSharp.Configuration
+    nuget FSharp.Data
+    nuget XPlot.GoogleCharts

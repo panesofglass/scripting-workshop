@@ -176,6 +176,15 @@ TestResults.xml
 # Nuget outputs
 nuget/*.nupkg
 .paket/paket.exe
+.paket/load/
 output
 paket-files
 release.cmd
+*.bak
+*.orig
+docs
+.fake/
+FSharp.Formatting.svclog
+_NCrunch*
+Sample/node_modules
+*.csv
