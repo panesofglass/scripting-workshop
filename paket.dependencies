@@ -1,5 +1,10 @@
 source https://nuget.org/api/v2
+framework: net462
 
-nuget FsReveal
-nuget FAKE
 nuget Suave
+
+group Build
+    source https://nuget.org/api/v2
+
+    nuget FsReveal
+    nuget FAKE

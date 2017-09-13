@@ -1,5 +1,5 @@
-#I @"packages/FsReveal/fsreveal/"
-#I @"packages/FAKE/tools/"
+#I @"packages/build/FsReveal/fsreveal/"
+#I @"packages/build/FAKE/tools/"
 #I @"packages/Suave/lib/net40"
 
 #r "FakeLib.dll"
@@ -9,10 +9,10 @@
 
 // Git configuration (used for publishing documentation in gh-pages branch)
 // The profile where the project is posted
-let gitOwner = "myGitUser"
-let gitHome = "https://github.com/" + gitOwner
+let gitOwner = "panesofglass"
+let gitHome = "git@github.com:" + gitOwner
 // The name of the project on GitHub
-let gitProjectName = "MyProject"
+let gitProjectName = "scripting-workshop"
 // The name of the GitHub repo subdirectory to publish slides to
 let gitSubDir = ""
 
@@ -93,7 +93,7 @@ let socketHandler (webSocket : WebSocket) =
       let! refreshed =
         Control.Async.AwaitEvent(refreshEvent.Publish)
         |> Suave.Sockets.SocketOp.ofAsync 
-      do! webSocket.send Text (ASCII.bytes "refreshed") true
+      do! webSocket.send Text (ByteSegment(ASCII.bytes "refreshed")) true
   }
 
 let startWebServer () =
@@ -110,7 +110,7 @@ let startWebServer () =
     let serverConfig = 
         { defaultConfig with
            homeFolder = Some (FullName outDir)
-           bindings = [ HttpBinding.mkSimple HTTP "127.0.0.1" port ]
+           bindings = [ HttpBinding.createSimple HTTP "127.0.0.1" port ]
         }
     let app =
       choose [
