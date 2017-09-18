@@ -12,20 +12,26 @@ let [<Literal>] appSettingsPath = __SOURCE_DIRECTORY__ + "/AppSettings.fsx.confi
 open System.Xml
 open System.Xml.Linq
 
-let config = XDocument.Load appSettingsPath
-let section name key value =
-    query {
-        for els in config.Descendants(XName.Get name) do
-        for el in els.Descendants(XName.Get "add") do
-        let k = el.Attribute(XName.Get key).Value 
-        let v = el.Attribute(XName.Get value).Value 
-        select (k,v)
-    }
-    |> dict
-let appSettings = section "appSettings" "key" "value"
-let connectionStrings = section "connectionStrings" "name" "connectionString"
-appSettings.["TestInt"]
-connectionStrings.["Test1"]
+#if INTERACTIVE
+type ConfigurationManager() =
+    static let config = XDocument.Load appSettingsPath
+    static let section (config:XDocument) name key value =
+        query {
+            for els in config.Descendants(XName.Get name) do
+            for el in els.Descendants(XName.Get "add") do
+            let k = el.Attribute(XName.Get key).Value 
+            let v = el.Attribute(XName.Get value).Value 
+            select (k,v)
+        }
+        |> dict
+    static let appSettings = section config "appSettings" "key" "value"
+    static let connectionStrings = section config "connectionStrings" "name" "connectionString"
+    static member AppSettings = appSettings
+    static member ConnectionStrings = connectionStrings
+#endif
+
+ConfigurationManager.AppSettings.["TestInt"]
+ConfigurationManager.ConnectionStrings.["Test1"]
 
 (**
  * Option 2: Use the FSharp.Configuration Type Provider
