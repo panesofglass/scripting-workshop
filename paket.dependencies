@@ -14,6 +14,7 @@ group Completed
     framework: net462
     generate_load_scripts: true
 
+    nuget Argu
     nuget Expecto
     nuget Expecto.BenchmarkDotNet
     nuget Expecto.FsCheck
