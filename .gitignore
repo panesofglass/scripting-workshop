@@ -187,3 +187,4 @@ docs
 FSharp.Formatting.svclog
 _NCrunch*
 Sample/node_modules
+*.csv
