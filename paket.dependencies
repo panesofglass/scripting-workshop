@@ -19,3 +19,5 @@ group Completed
     nuget Expecto.BenchmarkDotNet
     nuget Expecto.FsCheck
     nuget FSharp.Configuration
+    nuget FSharp.Data
+    nuget XPlot.GoogleCharts
