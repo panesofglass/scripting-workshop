@@ -81,6 +81,14 @@
 
 ---
 
+### Finding FSI
+
+* Windows: C:\Program Files (x86)\Microsoft SDKs\F#\<version>\Framework\<version>\
+* e.g. C:\Program Files (x86)\Microsoft SDKs\F#\4.1\Framework\v4.0\fsiAnyCPU.exe
+* Mac/Linux: fsharpi (via mono)
+
+---
+
 ### References
 
 ---
@@ -95,6 +103,10 @@
 ---
 
 ### Accessing App.config
+
+---
+
+### Running from the Command Line
 
 ---
 

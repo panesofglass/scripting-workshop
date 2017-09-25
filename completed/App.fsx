@@ -16,9 +16,11 @@ open FSharp.Data
 open XPlot.GoogleCharts
 
 
+#if INTERACTIVE
 fsi.AddPrinter(fun (chart:XPlot.GoogleCharts.GoogleChart) ->
    chart |> Chart.Show
    "Google Chart")
+#endif
 
 let [<Literal>] AppSettingsPath = __SOURCE_DIRECTORY__ + "/AppSettings.fsx.config"
 type Settings = FSharp.Configuration.AppSettings<AppSettingsPath>
@@ -145,9 +147,16 @@ type Arguments =
             match this with
             | City _ -> "Enter a location name"
 
+[<EntryPoint>]
+let main args =
+    //let args = [|"Map.fsx";"--city";"Adelaide"|].[1..]
+    let argParser = ArgumentParser.Create<Arguments>(errorHandler = ProcessExiter())
+    let argResults = argParser.Parse(args)
+    let city = argResults.GetResult <@ City @>
+    run city
+    0
+
+#if INTERACTIVE
 let args = fsi.CommandLineArgs.[1..]
-//let args = [|"Map.fsx";"--city";"Adelaide"|].[1..]
-let argParser = ArgumentParser.Create<Arguments>(errorHandler = ProcessExiter())
-let argResults = argParser.Parse(args)
-let city = argResults.GetResult <@ City @>
-run city
+main args |> ignore
+#endif
