@@ -1,3 +1,9 @@
+System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
+
+#load "Paket.fsx"
+Paket.download()
+Paket.restore()
+
 #r "System.Configuration.dll"
 #load "../.paket/load/net462/Completed/completed.group.fsx"
 #load "Configuration.fsx"
@@ -9,9 +15,6 @@ open FSharp.Configuration
 open FSharp.Data
 open XPlot.GoogleCharts
 
-// Configure environment and FSI printers
-
-Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 
 fsi.AddPrinter(fun (chart:XPlot.GoogleCharts.GoogleChart) ->
    chart |> Chart.Show
