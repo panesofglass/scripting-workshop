@@ -9,6 +9,8 @@
 
 ## The Agony and the Ecstasy of F# Scripting
 
+[![The Agony and the Ecstasy](images/the-agony-and-the-ecstasy.jpg)](https://emerdelac.files.wordpress.com/2012/05/the-agony-and-the-ecstasy.jpg)
+
 ***
 
 ## Use Cases
@@ -35,9 +37,9 @@
 
 ### Communicating
 
-1. Documentation
-2. Slide decks
-3. Literate programming
+1. [Documentation](http://fsprojects.github.io/ProjectScaffold/)
+2. [Slide decks](http://fsprojects.github.io/FsReveal/)
+3. [Literate programming](http://fsprojects.github.io/FSharp.Formatting/literate.html)
 
 ---
 
@@ -45,7 +47,13 @@
 
 ---
 
+### Scheduled Tasks
+ 
+---
+
 ### Configuration
+
+* FAKE
 
 ---
 
@@ -67,6 +75,11 @@
 
 ### Current Directory
 
+' When running F# interactive, the current directory is often
+' not what you think.
+' Try running `System.Environment.CurrentDirectory` and see
+' what FSI returns.
+
 ---
 
 ### Accessing App.config
@@ -80,6 +93,30 @@
 ' Trying to run code in F# interactive that has been written
 ' as a compiled library or executable can sometimes be tricky.
 ' We'll look at techniques to make this less difficult.
+
+***
+
+## Deployment options
+
+---
+
+### [iFSharp Notebooks](http://bayardrock.github.io/IfSharp/)
+
+---
+
+### [Azure Notebooks](https://blogs.msdn.microsoft.com/visualstudio/2016/12/05/azure-notebooks-now-support-f/)
+
+---
+
+### [Azure Functions](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-fsharp)
+
+---
+
+### [AWS Lambda](https://github.com/FSharpBristol/FSharp-Template-for-Aws-Lambda)
+
+---
+
+### FsReveal slides
 
 ***
 
