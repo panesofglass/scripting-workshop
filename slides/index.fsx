@@ -15,6 +15,8 @@
 
 ## Use Cases
 
+![ecstasy](images/ecstasy.png)
+
 ---
 
 ### Design
@@ -66,6 +68,8 @@
 ***
 
 ## Common Problems
+
+![agony](images/agony.png)
 
 ---
 
