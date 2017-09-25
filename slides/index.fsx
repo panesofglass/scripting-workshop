@@ -17,6 +17,16 @@
 
 ### Design
 
+' Design applies to both domain modeling and data modeling.
+' For domain modeling, you may want to use scripts to understand
+' the ramifications of certain design decisions. For example,
+' is a record the right type, or might you need a discriminated
+' union to better cover multiple cases, especially if you may need
+' more in the future. How might units of measure help or hinder?
+' With respect to data modeling, it can be helpful to throw the
+' data in a plot. Interactive sessions work well for this, and you
+' can check calculations more easily with visualizations. (Reference?)
+
 ---
 
 ### Testing
