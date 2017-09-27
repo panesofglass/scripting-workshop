@@ -1,9 +1,7 @@
 source https://nuget.org/api/v2
 framework: net461
 
-nuget FAKE
 nuget FSharp.Core
-nuget FSharp.NET.Sdk
 nuget Suave
 
 group Build
