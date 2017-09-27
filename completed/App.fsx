@@ -1,6 +1,6 @@
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 
-#load "Paket.fsx"
+#load "../exercises/Paket.fsx"
 Paket.download()
 Paket.restore()
 
