@@ -1,5 +1,5 @@
 source https://nuget.org/api/v2
-framework: net462
+framework: net461
 
 nuget FAKE
 nuget FSharp.Core
@@ -14,8 +14,7 @@ group Build
 
 group Completed
     source https://nuget.org/api/v2
-    framework: net462
-    generate_load_scripts: true
+    framework: net461
 
     nuget Argu
     nuget Expecto

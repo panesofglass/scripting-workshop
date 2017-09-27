@@ -3,6 +3,7 @@ System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #load "../exercises/Paket.fsx"
 Paket.download()
 Paket.restore()
+Paket.generateLoadScripts "net461"
 
 #r "System.Configuration.dll"
 #load "../.paket/load/net462/Completed/completed.group.fsx"
@@ -147,16 +148,19 @@ type Arguments =
             match this with
             | City _ -> "Enter a location name"
 
-[<EntryPoint>]
-let main args =
+let runCLI args =
     //let args = [|"Map.fsx";"--city";"Adelaide"|].[1..]
     let argParser = ArgumentParser.Create<Arguments>(errorHandler = ProcessExiter())
     let argResults = argParser.Parse(args)
     let city = argResults.GetResult <@ City @>
     run city
-    0
 
 #if INTERACTIVE
 let args = fsi.CommandLineArgs.[1..]
-main args |> ignore
+runCLI args
+#else
+[<EntryPoint>]
+let main args =
+    runCLI args
+    0
 #endif

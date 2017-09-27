@@ -3,7 +3,7 @@
 open System.Xml
 open System.Xml.Linq
 
-let [<Literal>] AppSettingsPath = __SOURCE_DIRECTORY__ + "/AppSettings.fsx.config"
+let [<Literal>] AppSettingsPath = __SOURCE_DIRECTORY__ + "/App.config"
 
 type ConfigurationManager() =
     static let config = XDocument.Load AppSettingsPath
