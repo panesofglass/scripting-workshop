@@ -700,6 +700,8 @@ printfn "%s" System.Environment.CurrentDirectory
 
 (*** include-value: app-settings-test2 ***)
 
+(**
+
 ---
 
 ![agony](images/agony.png)
