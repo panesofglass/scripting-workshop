@@ -6,7 +6,7 @@ Paket.restore()
 Paket.generateLoadScripts "net461"
 
 #r "System.Configuration.dll"
-#load "../.paket/load/net462/Completed/completed.group.fsx"
+#load "../.paket/load/net461/Completed/completed.group.fsx"
 #load "Configuration.fsx"
 open Configuration
 

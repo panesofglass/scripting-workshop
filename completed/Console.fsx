@@ -1,4 +1,4 @@
-#load "../.paket/load/net462/Completed/completed.group.fsx"
+#load "../.paket/load/net461/Completed/completed.group.fsx"
 
 open Argu
 
