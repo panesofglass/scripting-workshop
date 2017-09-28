@@ -147,11 +147,11 @@ through a few examples.<br/>
 <li>Loading and referencing files</li>
 <li>Referencing NuGet packages</li>
 <li>Accessing values from .config files</li>
-<li>Retrieving data</li>
+<li>Working with data</li>
+<li>Leveraging scripts for <acronym title="Extract-Transform-Load">ETL</acronym></li>
 <li>Testing</li>
 <li>Visualizing data sets</li>
 <li>Accessing command line parameters</li>
-<li>Leveraging scripts for <acronym title="Extract-Transform-Load">ETL</acronym></li>
 <li>Using scripts in a project</li>
 <li>Debugging scripts</li>
 <li>Build and deploy scripting with FAKE</li>
@@ -1185,7 +1185,7 @@ you can certainly add sections you want or need.<br/>
 </code></pre></td>
 </tr>
 </table>
-<table class="pre"><tr><td><pre><code>"7B7EB384FEBA4409B56066FF63F1E8D0"</code></pre></td></tr></table>
+<table class="pre"><tr><td><pre><code>"9050511f2aa54cc1a2be31a64af63804"</code></pre></td></tr></table>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="i">ConfigurationManager</span><span class="o">.</span><span class="i">ConnectionStrings</span><span class="o">.</span>[<span class="s">&quot;Test1&quot;</span>]
@@ -1215,10 +1215,670 @@ issues with your scripts.<br/>
 </section>
 </section>
 <section >
-<h2>Retrieving Data</h2>
+<section >
+<h2>Working with Data</h2>
+<aside class="notes">
+Let's start working on our ETL tool. First, we need to get some data.<br/>
+Create a new script named App.fsx.<br/>
+</aside>
 </section>
 <section >
+<h3>OpenCage GeoCoder</h3>
+<p><a href="https://geocoder.opencagedata.com/">https://geocoder.opencagedata.com/</a></p>
+<aside class="notes">
+We'll use OpenCage GeoCoder to retrieve a list of locations matching<br/>
+a specified query parameter.<br/>
+</aside>
+</section>
+<section >
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+<span class="l">15: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">open</span> <span class="i">FSharp</span><span class="o">.</span><span class="i">Data</span>
+
+<span class="k">let</span> <span class="i">appKey</span> <span class="o">=</span> <span class="i">ConfigurationManager</span><span class="o">.</span><span class="i">AppSettings</span><span class="o">.</span>[<span class="s">&quot;AppKey&quot;</span>]
+
+<span class="k">let</span> [&lt;<span class="i">Literal</span>&gt;] <span class="i">``geocoding.json``</span> <span class="o">=</span>
+    <span class="k">__SOURCE_DIRECTORY__</span> <span class="o">+</span> <span class="s">&quot;/geocoding.json&quot;</span>
+<span class="k">type</span> <span class="i">Location</span> <span class="o">=</span> <span class="i">JsonProvider</span><span class="o">&lt;</span><span class="i">``geocoding.json``</span><span class="o">&gt;</span>
+
+<span class="k">let</span> <span class="i">extract</span> <span class="i">city</span> <span class="o">=</span>
+    <span class="k">let</span> <span class="i">uri</span> <span class="o">=</span>
+        <span class="s">&quot;https://api.opencagedata.com/geocode/v1/json?q=&quot;</span>
+        <span class="o">+</span> <span class="i">city</span>
+        <span class="o">+</span> <span class="s">&quot;&amp;pretty=1&amp;no_annotations=1&amp;key=&quot;</span>
+        <span class="o">+</span> <span class="i">appKey</span>
+    <span class="i">Location</span><span class="o">.</span><span class="i">Load</span>(<span class="i">uri</span>)
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+This is quite a bit of code, so let's break it down.<br/>
+First, we are using FSharp.Data.JsonProvider, so we<br/>
+need to open FSharp.Data<br/>
+I've taken the liberty to save a copy of a sample<br/>
+response. When using JsonProvider with scripts, it's<br/>
+often helpful to copy the response. In this case, the<br/>
+API call is rate limited, so using the actual url to<br/>
+request a response to generate types can cost you a<br/>
+number of requests, especially if you are reloading your<br/>
+interactive environment often.<br/>
+The response output is used to define a type called Location.<br/>
+The extract function accepts a city (or general location),<br/>
+populates the request URI with the input and the appKey,<br/>
+then loads the response into the Location type.<br/>
+</aside>
+</section>
+<section >
+<h3>Call <code>extract</code></h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">result</span> <span class="o">=</span> <span class="i">extract</span> <span class="s">&quot;Adelaide&quot;</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+You should receive a result with one or more location results.<br/>
+It should match the format of the geocoding.json file.<br/>
+</aside>
+</section>
+<section >
+<h2>Leveraging Scripts for <acronym title="Extract-Transform-Load">ETL</acronym></h2>
+<aside class="notes">
+We have some data, but what can you do with it? Let's look at how we might<br/>
+write a little extract-transform-load script.<br/>
+</aside>
+</section>
+<section >
+<h3>Defining Domain Types</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+<span class="l">8: </span>
+<span class="l">9: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">type</span> <span class="i">LocationResult</span> <span class="o">=</span>
+  { <span class="i">DisplayName</span> <span class="o">:</span> <span class="i">string</span>
+    <span class="i">Latitude</span> <span class="o">:</span> <span class="i">float</span>
+    <span class="i">Longitude</span> <span class="o">:</span> <span class="i">float</span>
+    <span class="i">City</span> <span class="o">:</span> <span class="i">string</span>
+    <span class="i">State</span> <span class="o">:</span> <span class="i">string</span>
+    <span class="i">Country</span> <span class="o">:</span> <span class="i">string</span>
+    <span class="i">CountryCode</span> <span class="o">:</span> <span class="i">string</span>
+    <span class="i">EnergyUse</span> <span class="o">:</span> <span class="i">Runtime</span><span class="o">.</span><span class="i">WorldBank</span><span class="o">.</span><span class="i">Indicator</span> <span class="i">option</span> }
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+While the type provider generates a type matching the source data,<br/>
+we don't want either the returned shape nor all the detail returned.<br/>
+Let's define our own LocationResult type into which we'll format<br/>
+our data set.<br/>
+</aside>
+</section>
+<section >
+<h3>Define <code>transformSimple</code></h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">transformSimple</span> (<span class="i">source</span><span class="o">:</span><span class="i">Location</span><span class="o">.</span><span class="i">Root</span>) <span class="o">:</span> <span class="i">LocationResult</span> <span class="i">list</span> <span class="o">=</span>
+    [ <span class="k">for</span> <span class="i">result</span> <span class="k">in</span> <span class="i">source</span><span class="o">.</span><span class="i">Results</span> <span class="k">-&gt;</span>
+        { <span class="i">DisplayName</span> <span class="o">=</span> <span class="i">result</span><span class="o">.</span><span class="i">Formatted</span>
+          <span class="i">Latitude</span> <span class="o">=</span> <span class="i">float</span> <span class="i">result</span><span class="o">.</span><span class="i">Geometry</span><span class="o">.</span><span class="i">Lat</span>
+          <span class="i">Longitude</span> <span class="o">=</span> <span class="i">float</span> <span class="i">result</span><span class="o">.</span><span class="i">Geometry</span><span class="o">.</span><span class="i">Lng</span>
+          <span class="i">City</span> <span class="o">=</span> <span class="i">result</span><span class="o">.</span><span class="i">Components</span><span class="o">.</span><span class="i">City</span>
+          <span class="i">State</span> <span class="o">=</span> <span class="i">result</span><span class="o">.</span><span class="i">Components</span><span class="o">.</span><span class="i">State</span>
+          <span class="i">Country</span> <span class="o">=</span> <span class="i">result</span><span class="o">.</span><span class="i">Components</span><span class="o">.</span><span class="i">Country</span>
+          <span class="i">CountryCode</span> <span class="o">=</span> <span class="i">result</span><span class="o">.</span><span class="i">Components</span><span class="o">.</span><span class="i">Iso31661Alpha2</span>
+          <span class="i">EnergyUse</span> <span class="o">=</span> <span class="i">None</span> }
+    ]
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+Here I've defined transformSimple, a version of our transform function<br/>
+that doesn't populate the EnergyUse property. More on that in a bit.<br/>
+This is not all that complex, and that's really the beauty of using<br/>
+F# for this type of work. Translations are simple functions mapping<br/>
+one type to another.<br/>
+</aside>
+</section>
+<section >
+<h3>World Bank Data</h3>
+<aside class="notes">
+However, we want additional data about energy use for the location.<br/>
+Let's use the World Bank type provider to look up energy use for the<br/>
+country location to demonstrate a) the ability to mix data sets from<br/>
+different sources easily and b) provide something more useful than<br/>
+simple location data for our ETL application.<br/>
+</aside>
+</section>
+<section >
+<h3>Define <code>transform</code></h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+<span class="l">15: </span>
+<span class="l">16: </span>
+<span class="l">17: </span>
+<span class="l">18: </span>
+<span class="l">19: </span>
+<span class="l">20: </span>
+<span class="l">21: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">extractEnergyUse</span> (<span class="i">result</span><span class="o">:</span><span class="i">Location</span><span class="o">.</span><span class="i">Result</span>)
+        (<span class="i">wb</span><span class="o">:</span><span class="i">WorldBankData</span><span class="o">.</span><span class="i">ServiceTypes</span><span class="o">.</span><span class="i">WorldBankDataService</span>) <span class="o">=</span>
+    <span class="i">wb</span><span class="o">.</span><span class="i">Countries</span>
+    <span class="o">|&gt;</span> <span class="i">Seq</span><span class="o">.</span><span class="i">tryFind</span> (<span class="k">fun</span> <span class="i">x</span> <span class="k">-&gt;</span>
+        <span class="i">result</span><span class="o">.</span><span class="i">Components</span><span class="o">.</span><span class="i">Country</span><span class="o">.</span><span class="i">StartsWith</span>(<span class="i">x</span><span class="o">.</span><span class="i">Name</span>))
+    <span class="o">|&gt;</span> <span class="i">Option</span><span class="o">.</span><span class="i">map</span> (<span class="k">fun</span> <span class="i">x</span> <span class="k">-&gt;</span>
+        <span class="i">x</span><span class="o">.</span><span class="i">Indicators</span><span class="o">.</span><span class="i">``Energy use (kg of oil equivalent per capita)``</span>)
+
+<span class="k">let</span> <span class="i">transform</span> (<span class="i">source</span><span class="o">:</span><span class="i">Location</span><span class="o">.</span><span class="i">Root</span>) <span class="o">:</span> <span class="i">LocationResult</span> <span class="i">list</span> <span class="o">=</span>
+    <span class="k">let</span> <span class="i">wb</span> <span class="o">=</span> <span class="i">WorldBankData</span><span class="o">.</span><span class="i">GetDataContext</span>()
+    [ <span class="k">for</span> <span class="i">result</span> <span class="k">in</span> <span class="i">source</span><span class="o">.</span><span class="i">Results</span> <span class="k">-&gt;</span>
+        <span class="k">let</span> <span class="i">energyUse</span> <span class="o">=</span> <span class="i">extractEnergyUse</span> <span class="i">result</span> <span class="i">wb</span>
+        { <span class="i">DisplayName</span> <span class="o">=</span> <span class="i">result</span><span class="o">.</span><span class="i">Formatted</span>
+          <span class="i">Latitude</span> <span class="o">=</span> <span class="i">float</span> <span class="i">result</span><span class="o">.</span><span class="i">Geometry</span><span class="o">.</span><span class="i">Lat</span>
+          <span class="i">Longitude</span> <span class="o">=</span> <span class="i">float</span> <span class="i">result</span><span class="o">.</span><span class="i">Geometry</span><span class="o">.</span><span class="i">Lng</span>
+          <span class="i">City</span> <span class="o">=</span> <span class="i">result</span><span class="o">.</span><span class="i">Components</span><span class="o">.</span><span class="i">City</span>
+          <span class="i">State</span> <span class="o">=</span> <span class="i">result</span><span class="o">.</span><span class="i">Components</span><span class="o">.</span><span class="i">State</span>
+          <span class="i">Country</span> <span class="o">=</span> <span class="i">result</span><span class="o">.</span><span class="i">Components</span><span class="o">.</span><span class="i">Country</span>
+          <span class="i">CountryCode</span> <span class="o">=</span> <span class="i">result</span><span class="o">.</span><span class="i">Components</span><span class="o">.</span><span class="i">Iso31661Alpha2</span>
+          <span class="i">EnergyUse</span> <span class="o">=</span> <span class="i">energyUse</span> }
+    ]
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+The World Bank type provider already understands how to translate<br/>
+HTTP requests from the World Bank and provides a number of indicators.<br/>
+Define extractEnergyUse to retrieve World Bank indicators for each<br/>
+result. We'll also parameterize the data context used to access<br/>
+the World Bank so we don't have to re-create it for each request.<br/>
+</aside>
+</section>
+<section >
+<h3>Persisting Data</h3>
+<aside class="notes">
+You may typically use SQL databases when manipulating data, but we'll<br/>
+use CSV for this exercise. Fortunately, FSharp.Data provides the CsvProvider<br/>
+with which we can read from and create CSV files.<br/>
+</aside>
+</section>
+<section >
+<h3>CsvProvider</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">type</span> <span class="i">LocationSink</span> <span class="o">=</span>
+    <span class="i">CsvProvider</span><span class="o">&lt;</span><span class="s">&quot;Location (string),Latitude (float),Longitude (float),City (string),State (string),Country (string),CountryCode (string)&quot;</span><span class="o">&gt;</span>
+<span class="k">type</span> <span class="i">EnergyUseSink</span> <span class="o">=</span>
+    <span class="i">CsvProvider</span><span class="o">&lt;</span><span class="s">&quot;CountryCode (string),EnergyUse (float)&quot;</span><span class="o">&gt;</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+You can find the full headers in the LocationSinkHeaders.txt and<br/>
+EnergyUseSinkHeaders.txt files in the exercises folder.<br/>
+</aside>
+</section>
+<section >
+<h3>Define <code>load</code></h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+<span class="l">15: </span>
+<span class="l">16: </span>
+<span class="l">17: </span>
+<span class="l">18: </span>
+<span class="l">19: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">load</span> (<span class="i">data</span><span class="o">:</span><span class="i">LocationResult</span> <span class="i">list</span>) <span class="o">=</span>
+    <span class="k">let</span> <span class="i">locations</span>, <span class="i">energyUse</span> <span class="o">=</span>
+        [ <span class="k">for</span> <span class="i">row</span> <span class="k">in</span> <span class="i">data</span> <span class="k">-&gt;</span>
+            <span class="k">let</span> <span class="i">location</span> <span class="o">=</span>
+                <span class="i">LocationSink</span><span class="o">.</span><span class="i">Row</span>(
+                    <span class="i">row</span><span class="o">.</span><span class="i">DisplayName</span>, <span class="i">row</span><span class="o">.</span><span class="i">Latitude</span>,
+                    <span class="i">row</span><span class="o">.</span><span class="i">Longitude</span>, <span class="i">row</span><span class="o">.</span><span class="i">City</span>,
+                    <span class="i">row</span><span class="o">.</span><span class="i">State</span>, <span class="i">row</span><span class="o">.</span><span class="i">Country</span>,
+                    <span class="i">row</span><span class="o">.</span><span class="i">CountryCode</span>
+                )
+            <span class="k">let</span> <span class="i">usage</span> <span class="o">=</span>
+                <span class="k">match</span> <span class="i">row</span><span class="o">.</span><span class="i">EnergyUse</span> <span class="k">with</span>
+                | <span class="i">Some</span> <span class="i">i</span> <span class="k">-&gt;</span>
+                    [ <span class="k">for</span> <span class="i">y</span> <span class="k">in</span> <span class="n">1960..</span><span class="n">2012</span> <span class="k">-&gt;</span>
+                        <span class="i">EnergyUseSink</span><span class="o">.</span><span class="i">Row</span>(<span class="i">row</span><span class="o">.</span><span class="i">CountryCode</span>, <span class="i">i</span><span class="o">.</span>[<span class="i">y</span>]) ]
+                | <span class="i">None</span> <span class="k">-&gt;</span> []
+            <span class="i">location</span>, <span class="i">usage</span>
+        ]
+        <span class="o">|&gt;</span> <span class="i">List</span><span class="o">.</span><span class="i">unzip</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+Once again, this is quite a lot of code in one snippet.<br/>
+We are defining a list comprehension that traverses each<br/>
+LocationResult and builds up pairs of LocationSink.Row and<br/>
+EnergyUseSink.Row list results. We then unzip them to separate<br/>
+the two lists.<br/>
+</aside>
+</section>
+<section >
+<h3>Define <code>load</code> (cont)</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+<span class="l">8: </span>
+<span class="l">9: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp">    <span class="k">do</span>
+        <span class="k">use</span> <span class="i">locationSink</span> <span class="o">=</span> <span class="k">new</span> <span class="i">LocationSink</span>(<span class="i">locations</span>)
+        <span class="i">locationSink</span><span class="o">.</span><span class="i">Save</span>(<span class="s">&quot;locations.csv&quot;</span>)
+    <span class="k">do</span>
+        <span class="k">let</span> <span class="i">distinct</span> <span class="o">=</span>
+            <span class="i">List</span><span class="o">.</span><span class="i">concat</span> <span class="i">energyUse</span>
+            <span class="o">|&gt;</span> <span class="i">List</span><span class="o">.</span><span class="i">distinctBy</span> (<span class="k">fun</span> <span class="i">x</span> <span class="k">-&gt;</span> <span class="i">x</span><span class="o">.</span><span class="i">CountryCode</span>)
+        <span class="k">use</span> <span class="i">energyUseSink</span> <span class="o">=</span> <span class="k">new</span> <span class="i">EnergyUseSink</span>(<span class="i">distinct</span>)
+        <span class="i">energyUseSink</span><span class="o">.</span><span class="i">Save</span>(<span class="s">&quot;energyUse.csv&quot;</span>)
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+Now that we have the results, we need to create the CSV files.<br/>
+We can load the row lists into their respective Sink types<br/>
+and call Save, passing a file name.<br/>
+For energyUse, since we may have multiple locations within the<br/>
+same country, let's make sure to capture only distinct results<br/>
+to avoid duplicates.<br/>
+You would follow a similar approach when working with a SQL database.<br/>
+</aside>
+</section>
+<section >
+<h3>Define <code>run</code></h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">run</span> <span class="i">city</span> <span class="o">=</span>
+    <span class="k">let</span> <span class="i">data</span> <span class="o">=</span> (<span class="i">extract</span> <span class="o">&gt;</span><span class="o">&gt;</span> <span class="i">transform</span>) <span class="i">city</span>
+    <span class="i">load</span> <span class="i">data</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+Let's define a run function to make it easier to run everything together.<br/>
+Try it out. What sort of results are you getting? Look at the CSV results.<br/>
+Are they what you would expect?<br/>
+You can run just the `let data = (extract >> transform) "City"` to see the<br/>
+LocationResults directly.<br/>
+</aside>
+</section>
+<section >
+<h3>Iterating Design</h3>
+<aside class="notes">
+I'd like to point out at this point that this would be a good time to move<br/>
+our types to a library .fs file. However, we will leave them here for now.<br/>
+</aside>
+</section>
+<section >
+<p><img src="images/ecstasy.png" alt="ecstasy" /></p>
+</section>
+</section>
+<section >
+<section >
 <h2>Testing</h2>
+<aside class="notes">
+Let's take an opportunity to test our code. There are multiple kinds of tests,<br/>
+and we'll start with some simple performance testing. This won't be anything<br/>
+spectacular; we'll simply leverage a directive available in F# Interactive.<br/>
+</aside>
+</section>
+<section >
+<h3><code>#time</code></h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="o">&gt;</span> #<span class="i">time</span>;;
+
+<span class="o">--&gt;</span> <span class="i">Timing</span> <span class="i">now</span> <span class="i">on</span>
+
+<span class="o">&gt;</span> <span class="i">run</span> <span class="s">&quot;Houston&quot;</span>;;
+<span class="i">Real</span><span class="o">:</span> <span class="n">00</span><span class="o">:</span><span class="n">00</span><span class="o">:</span><span class="n">00.970</span>, <span class="i">CPU</span><span class="o">:</span> <span class="n">00</span><span class="o">:</span><span class="n">00</span><span class="o">:</span><span class="n">00.093</span>, <span class="i">GC</span> <span class="i">gen0</span><span class="o">:</span> <span class="n">1</span>, <span class="i">gen1</span><span class="o">:</span> <span class="n">0</span>, <span class="i">gen2</span><span class="o">:</span> <span class="n">0</span>
+<span class="k">val</span> <span class="i">it</span> <span class="o">:</span> <span class="i">unit</span> <span class="o">=</span> ()
+
+<span class="o">&gt;</span> #<span class="i">time</span>;;
+
+<span class="o">--&gt;</span> <span class="i">Timing</span> <span class="i">now</span> <span class="i">off</span>
+
+<span class="o">&gt;</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+There are multiple kinds of tests,<br/>
+and we'll start with some simple performance testing. This won't be anything<br/>
+spectacular; we'll simply leverage a directive available in F# Interactive.<br/>
+</aside>
+</section>
+<section >
+<p><img src="images/ecstasy.png" alt="ecstasy" /></p>
+</section>
+<section >
+<h3>Unit Testing with xUnit.net</h3>
+<aside class="notes">
+This won't work well for scripts since xunit uses a separate test runner<br/>
+that uses reflection to find tests using attributes.<br/>
+</aside>
+</section>
+<section >
+<p><img src="images/agony.png" alt="agony" /></p>
+</section>
+<section >
+<h3>Unit Testing with NUnit</h3>
+<aside class="notes">
+See above.<br/>
+</aside>
+</section>
+<section >
+<p><img src="images/agony.png" alt="agony" /></p>
+</section>
+<section >
+<h3>Unit Testing with Expecto</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="prep">#load</span> <span class="s">&quot;../.paket/load/net461/main.group.fsx&quot;</span>
+
+<span class="k">open</span> <span class="i">Expecto</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+At last, a testing library that will run in a script!<br/>
+First, create a new file, Tests.fsx, then open Expecto.<br/>
+</aside>
+</section>
+<section >
+<h3>Write a Test</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">addTest</span> <span class="o">=</span>
+    <span class="i">testCase</span> <span class="s">&quot;An addition test&quot;</span> <span class="o">&lt;|</span> <span class="k">fun</span> () <span class="k">-&gt;</span>
+        <span class="k">let</span> <span class="i">expected</span> <span class="o">=</span> <span class="n">4</span>
+        <span class="i">Expect</span><span class="o">.</span><span class="i">equal</span> <span class="i">expected</span> (<span class="n">2</span><span class="o">+</span><span class="n">2</span>) <span class="s">&quot;2+2 = 4&quot;</span>
+
+<span class="i">Tests</span><span class="o">.</span><span class="i">runTests</span> <span class="i">defaultConfig</span> <span class="i">addTest</span>
+</code></pre></td>
+</tr>
+</table>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp">[<span class="n">15</span><span class="o">:</span><span class="n">21</span><span class="o">:</span><span class="n">46</span> <span class="i">INF</span>] <span class="i">EXPECTO</span><span class="o">?</span> <span class="i">Running</span> <span class="i">tests</span><span class="o">..</span><span class="o">.</span> <span class="o">&lt;</span><span class="i">Expecto</span><span class="o">&gt;</span>
+[<span class="n">15</span><span class="o">:</span><span class="n">21</span><span class="o">:</span><span class="n">46</span> <span class="i">INF</span>] <span class="i">EXPECTO!</span> <span class="n">1</span> <span class="i">tests</span> <span class="i">run</span> <span class="k">in</span> <span class="n">00</span><span class="o">:</span><span class="n">00</span><span class="o">:</span><span class="n">00.0297663</span> 
+
+<span class="k">val</span> <span class="i">it</span> <span class="o">:</span> <span class="i">int</span> <span class="o">=</span> <span class="n">0</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+Let's start with a simple test. Well, that was easy. You define a testCase by<br/>
+giving it a name and a function to run. You verify the expected result using<br/>
+Expect.equal, which takes an expected value, the actual value, and a message<br/>
+if the test case fails.<br/>
+</aside>
+</section>
+<section >
+<h3>Write a Failing Test</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">failTest</span> <span class="o">=</span>
+    <span class="i">testCase</span> <span class="s">&quot;Failing test&quot;</span> <span class="o">&lt;|</span> <span class="k">fun</span> () <span class="k">-&gt;</span>
+        <span class="i">Expect</span><span class="o">.</span><span class="i">equal</span> <span class="n">1</span> <span class="n">2</span> <span class="s">&quot;1 &lt;&gt; 2&quot;</span>
+
+<span class="i">Tests</span><span class="o">.</span><span class="i">runTests</span> <span class="i">defaultConfig</span> <span class="i">failTest</span>
+</code></pre></td>
+</tr>
+</table>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+<span class="l">8: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp">[<span class="n">15</span><span class="o">:</span><span class="n">29</span><span class="o">:</span><span class="n">39</span> <span class="i">INF</span>] <span class="i">EXPECTO</span><span class="o">?</span> <span class="i">Running</span> <span class="i">tests</span><span class="o">..</span><span class="o">.</span> <span class="o">&lt;</span><span class="i">Expecto</span><span class="o">&gt;</span>
+[<span class="n">15</span><span class="o">:</span><span class="n">29</span><span class="o">:</span><span class="n">39</span> <span class="i">ERR</span>] <span class="i">Failing</span> <span class="i">test</span> <span class="i">failed</span> <span class="k">in</span> <span class="n">00</span><span class="o">:</span><span class="n">00</span><span class="o">:</span><span class="n">00.0150000</span><span class="o">.</span>
+<span class="n">1</span> <span class="o">&lt;&gt;</span> <span class="n">2.</span> <span class="i">Actual</span> <span class="i">value</span> <span class="i">was</span> <span class="n">1</span> <span class="i">but</span> <span class="i">had</span> <span class="i">expected</span> <span class="i">it</span> <span class="k">to</span> <span class="i">be</span> <span class="n">2.</span>
+  <span class="i">s</span><span class="o">:</span>
+ <span class="o">&lt;</span><span class="i">Expecto</span><span class="o">&gt;</span>
+[<span class="n">15</span><span class="o">:</span><span class="n">29</span><span class="o">:</span><span class="n">39</span> <span class="i">INF</span>] <span class="i">EXPECTO!</span> <span class="n">1</span> <span class="i">tests</span> <span class="i">run</span> <span class="k">in</span> <span class="n">00</span><span class="o">:</span><span class="n">00</span><span class="o">:</span><span class="n">00.0270684</span> 
+
+<span class="k">val</span> <span class="i">it</span> <span class="o">:</span> <span class="i">int</span> <span class="o">=</span> <span class="n">1</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+Write a failing test. Here you can see the test case name and message in the output,<br/>
+making it quite easy to identify the culprit. <br/>
+</aside>
+</section>
+<section >
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">multTest</span> <span class="o">=</span>
+    <span class="i">testCase</span> <span class="s">&quot;A multiplication test&quot;</span> <span class="o">&lt;|</span> <span class="k">fun</span> () <span class="k">-&gt;</span>
+        <span class="k">let</span> <span class="i">expected</span> <span class="o">=</span> <span class="n">4</span>
+        <span class="i">Expect</span><span class="o">.</span><span class="i">equal</span> <span class="i">expected</span> (<span class="n">2</span><span class="o">*</span><span class="n">2</span>) <span class="s">&quot;2*2 = 4&quot;</span>
+
+<span class="k">let</span> <span class="i">intTests</span> <span class="o">=</span>
+    <span class="i">testList</span> <span class="s">&quot;Integer math tests&quot;</span> [
+        <span class="i">addTest</span>
+        <span class="i">multTest</span>
+    ]
+
+<span class="i">Tests</span><span class="o">.</span><span class="i">runTests</span> <span class="i">defaultConfig</span> <span class="i">intTests</span>
+</code></pre></td>
+</tr>
+</table>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp">[<span class="n">15</span><span class="o">:</span><span class="n">27</span><span class="o">:</span><span class="n">37</span> <span class="i">INF</span>] <span class="i">EXPECTO</span><span class="o">?</span> <span class="i">Running</span> <span class="i">tests</span><span class="o">..</span><span class="o">.</span> <span class="o">&lt;</span><span class="i">Expecto</span><span class="o">&gt;</span>
+[<span class="n">15</span><span class="o">:</span><span class="n">27</span><span class="o">:</span><span class="n">37</span> <span class="i">INF</span>] <span class="i">EXPECTO!</span> <span class="n">2</span> <span class="i">tests</span> <span class="i">run</span> <span class="k">in</span> <span class="n">00</span><span class="o">:</span><span class="n">00</span><span class="o">:</span><span class="n">00.0019015</span> 
+
+<span class="k">val</span> <span class="i">it</span> <span class="o">:</span> <span class="i">int</span> <span class="o">=</span> <span class="n">0</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+In Expecto, tests are values, and you can group them and run them in their groups.<br/>
+</aside>
+</section>
+<section >
+<p><img src="images/ecstasy.png" alt="ecstasy" /></p>
+</section>
+<section >
+<h3>FsCheck</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+<span class="l">15: </span>
+<span class="l">16: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">config</span> <span class="o">=</span> { <span class="i">FsCheckConfig</span><span class="o">.</span><span class="i">defaultConfig</span> <span class="k">with</span> <span class="i">maxTest</span> <span class="o">=</span> <span class="n">10000</span> }
+
+<span class="k">let</span> <span class="i">properties</span> <span class="o">=</span>
+    <span class="i">testList</span> <span class="s">&quot;FsCheck samples&quot;</span> [
+        <span class="i">testProperty</span> <span class="s">&quot;Addition is commutative&quot;</span> <span class="o">&lt;|</span> <span class="k">fun</span> <span class="i">a</span> <span class="i">b</span> <span class="k">-&gt;</span>
+            <span class="i">a</span> <span class="o">+</span> <span class="i">b</span> <span class="o">=</span> <span class="i">b</span> <span class="o">+</span> <span class="i">a</span>
+
+        <span class="i">testProperty</span> <span class="s">&quot;Reverse of reverse of a list is the original list&quot;</span> <span class="o">&lt;|</span>
+            <span class="k">fun</span> (<span class="i">xs</span><span class="o">:</span><span class="i">list</span><span class="o">&lt;</span><span class="i">int</span><span class="o">&gt;</span>) <span class="k">-&gt;</span> <span class="i">List</span><span class="o">.</span><span class="i">rev</span> (<span class="i">List</span><span class="o">.</span><span class="i">rev</span> <span class="i">xs</span>) <span class="o">=</span> <span class="i">xs</span>
+
+        <span class="c">// you can also override the FsCheck config</span>
+        <span class="i">testPropertyWithConfig</span> <span class="i">config</span> <span class="s">&quot;Product is distributive over addition&quot;</span> <span class="o">&lt;|</span>
+            <span class="k">fun</span> <span class="i">a</span> <span class="i">b</span> <span class="i">c</span> <span class="k">-&gt;</span> <span class="i">a</span> <span class="o">*</span> (<span class="i">b</span> <span class="o">+</span> <span class="i">c</span>) <span class="o">=</span> <span class="i">a</span> <span class="o">*</span> <span class="i">b</span> <span class="o">+</span> <span class="i">a</span> <span class="o">*</span> <span class="i">c</span>
+    ]
+
+<span class="i">Tests</span><span class="o">.</span><span class="i">runTests</span> <span class="i">defaultConfig</span> <span class="i">properties</span>
+</code></pre></td>
+</tr>
+</table>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp">[<span class="n">15</span><span class="o">:</span><span class="n">33</span><span class="o">:</span><span class="n">04</span> <span class="i">INF</span>] <span class="i">EXPECTO</span><span class="o">?</span> <span class="i">Running</span> <span class="i">tests</span><span class="o">..</span><span class="o">.</span> <span class="o">&lt;</span><span class="i">Expecto</span><span class="o">&gt;</span>
+[<span class="n">15</span><span class="o">:</span><span class="n">33</span><span class="o">:</span><span class="n">04</span> <span class="i">INF</span>] <span class="i">EXPECTO!</span> <span class="n">3</span> <span class="i">tests</span> <span class="i">run</span> <span class="k">in</span> <span class="n">00</span><span class="o">:</span><span class="n">00</span><span class="o">:</span><span class="n">00.1008472</span> 
+</code></pre></td>
+</tr>
+</table>
+</section>
+<section >
+<h3>Group testLists</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">allTests</span> <span class="o">=</span>
+    <span class="i">testList</span> <span class="s">&quot;all tests&quot;</span> [
+        <span class="i">intTests</span>
+        <span class="i">properties</span>
+    ]
+
+<span class="i">Tests</span><span class="o">.</span><span class="i">runTests</span> <span class="i">defaultConfig</span> <span class="i">allTests</span>
+</code></pre></td>
+</tr>
+</table>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp">[<span class="n">15</span><span class="o">:</span><span class="n">34</span><span class="o">:</span><span class="n">09</span> <span class="i">INF</span>] <span class="i">EXPECTO</span><span class="o">?</span> <span class="i">Running</span> <span class="i">tests</span><span class="o">..</span><span class="o">.</span> <span class="o">&lt;</span><span class="i">Expecto</span><span class="o">&gt;</span>
+[<span class="n">15</span><span class="o">:</span><span class="n">34</span><span class="o">:</span><span class="n">09</span> <span class="i">INF</span>] <span class="i">EXPECTO!</span> <span class="n">5</span> <span class="i">tests</span> <span class="i">run</span> <span class="k">in</span> <span class="n">00</span><span class="o">:</span><span class="n">00</span><span class="o">:</span><span class="n">00.1008795</span> 
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+Lastly, you can even group lists of tests and run them all together.<br/>
+</aside>
+</section>
+<section >
+<h3>Write some tests!</h3>
+<aside class="notes">
+Take a few minutes to write a few tests for the ETL functions we just wrote.<br/>
+Given we used type providers, it may be difficult to think through what tests<br/>
+to write. There's no correct answer. You may want to verify the CSV files were<br/>
+written or that the transform function returned 1 or more results.<br/>
+</aside>
+</section>
 </section>
 <section >
 <h2>Visualizing Data Sets</h2>
@@ -1227,16 +1887,16 @@ issues with your scripts.<br/>
 <h2>Accessing Command Line Parameters</h2>
 </section>
 <section >
-<h2>Leveraging Scripts for <acronym title="Extract-Transform-Load">ETL</acronym></h2>
+<h2>DEMO</h2>
+<h3>Using Scripts in a Project</h3>
 </section>
 <section >
-<h2>Using Scripts in a Project</h2>
+<h2>DEMO</h2>
+<h3>Debugging Scripts</h3>
 </section>
 <section >
-<h2>Debugging Scripts</h2>
-</section>
-<section >
-<h2>Build and Deploy Scripting with FAKE</h2>
+<h2>DEMO</h2>
+<h3>Build and Deploy Scripting with FAKE</h3>
 </section>
 <section >
 <h1>Review</h1>
