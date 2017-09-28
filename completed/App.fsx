@@ -41,6 +41,11 @@ let extract city =
     let uri = sprintf "https://api.opencagedata.com/geocode/v1/json?q=%s&pretty=1&no_annotations=1&key=%s" city appKey
     Location.Load(uri)
 
+let extractEnergyUse (result:Location.Result) (wb:WorldBankData.ServiceTypes.WorldBankDataService) =
+    wb.Countries
+    |> Seq.tryFind (fun x -> result.Components.Country.StartsWith(x.Name))
+    |> Option.map (fun x -> x.Indicators.``Energy use (kg of oil equivalent per capita)``)
+
 // Transform data
 type LocationResult =
   { DisplayName : string
@@ -55,10 +60,7 @@ type LocationResult =
 let transform (source:Location.Root) : LocationResult list =
     let wb = WorldBankData.GetDataContext()
     [ for result in source.Results ->
-        let energyUse =
-            wb.Countries
-            |> Seq.tryFind (fun x -> result.Components.Country.StartsWith(x.Name))
-            |> Option.map (fun x -> x.Indicators.``Energy use (kg of oil equivalent per capita)``)
+        let energyUse = extractEnergyUse result wb
         { DisplayName = result.Formatted
           Latitude = float result.Geometry.Lat
           Longitude = float result.Geometry.Lng

@@ -1,0 +1,1 @@
+Location (string),Latitude (float),Longitude (float),City (string),State (string),Country (string),CountryCode (string)

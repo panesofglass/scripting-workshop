@@ -113,11 +113,11 @@ let setCwd dir =
 * Loading and referencing files
 * Referencing NuGet packages
 * Accessing values from .config files
-* Retrieving data
+* Working with data
+* Leveraging scripts for <acronym title="Extract-Transform-Load">ETL</acronym>
 * Testing
 * Visualizing data sets
 * Accessing command line parameters
-* Leveraging scripts for <acronym title="Extract-Transform-Load">ETL</acronym>
 * Using scripts in a project
 * Debugging scripts
 * Build and deploy scripting with FAKE 
@@ -862,7 +862,7 @@ let [<Literal>] Config = __SOURCE_DIRECTORY__ + "/index.fsx.config"
 type ScriptSettings = AppSettings<Config>
 let [<Literal>] Exec = __SOURCE_DIRECTORY__ + "/index.fsx"
 ScriptSettings.SelectExecutableFile Exec
-let appKey = ScriptSettings.AppKey
+let appKey1 = ScriptSettings.AppKey
 
 (*** show ***)
 Settings.AppKey
@@ -873,7 +873,7 @@ Settings.AppKey
 
 *)
 
-(*** include-value:appKey ***)
+(*** include-value:appKey1 ***)
 
 (**
 
@@ -962,8 +962,8 @@ open Configuration
 
 ConfigurationManager.AppSettings.["AppKey"]
 (*** hide ***)
-let appKey2 = ConfigurationManager.AppSettings.["AppKey"]
-(*** include-value:appKey2 ***)
+let appKey = ConfigurationManager.AppSettings.["AppKey"]
+(*** include-value:appKey ***)
 
 ConfigurationManager.ConnectionStrings.["Test1"]
 (*** hide ***)
@@ -994,15 +994,506 @@ let test1 = ConfigurationManager.ConnectionStrings.["Test1"]
 
 ***
 
-## Retrieving Data
+## Working with Data
+
+' Let's start working on our ETL tool. First, we need to get some data.
+' Create a new script named App.fsx.
+
+---
+
+### OpenCage GeoCoder
+
+https://geocoder.opencagedata.com/
+
+' We'll use OpenCage GeoCoder to retrieve a list of locations matching
+' a specified query parameter.
+
+---
+
+*)
+
+open FSharp.Data
+
+let appKey = ConfigurationManager.AppSettings.["AppKey"]
+
+let [<Literal>] ``geocoding.json`` =
+    __SOURCE_DIRECTORY__ + "/geocoding.json"
+type Location = JsonProvider<``geocoding.json``>
+
+let extract city =
+    let uri =
+        "https://api.opencagedata.com/geocode/v1/json?q="
+        + city
+        + "&pretty=1&no_annotations=1&key="
+        + appKey
+    Location.Load(uri)
+
+(**
+
+' This is quite a bit of code, so let's break it down.
+' First, we are using FSharp.Data.JsonProvider, so we
+' need to open FSharp.Data
+' I've taken the liberty to save a copy of a sample
+' response. When using JsonProvider with scripts, it's
+' often helpful to copy the response. In this case, the
+' API call is rate limited, so using the actual url to
+' request a response to generate types can cost you a
+' number of requests, especially if you are reloading your
+' interactive environment often.
+' The response output is used to define a type called Location.
+' The extract function accepts a city (or general location),
+' populates the request URI with the input and the appKey,
+' then loads the response into the Location type.
+
+---
+
+### Call `extract`
+
+*)
+
+let result = extract "Adelaide"
+
+(**
+
+' You should receive a result with one or more location results.
+' It should match the format of the geocoding.json file.
+
+---
+
+## Leveraging Scripts for <acronym title="Extract-Transform-Load">ETL</acronym>
+
+' We have some data, but what can you do with it? Let's look at how we might
+' write a little extract-transform-load script.
+
+---
+
+### Defining Domain Types
+
+*)
+
+type LocationResult =
+  { DisplayName : string
+    Latitude : float
+    Longitude : float
+    City : string
+    State : string
+    Country : string
+    CountryCode : string
+    EnergyUse : Runtime.WorldBank.Indicator option }
+
+(**
+
+' While the type provider generates a type matching the source data,
+' we don't want either the returned shape nor all the detail returned.
+' Let's define our own LocationResult type into which we'll format
+' our data set.
+
+---
+
+### Define `transformSimple`
+
+*)
+
+let transformSimple (source:Location.Root) : LocationResult list =
+    [ for result in source.Results ->
+        { DisplayName = result.Formatted
+          Latitude = float result.Geometry.Lat
+          Longitude = float result.Geometry.Lng
+          City = result.Components.City
+          State = result.Components.State
+          Country = result.Components.Country
+          CountryCode = result.Components.Iso31661Alpha2
+          EnergyUse = None }
+    ]
+
+(**
+
+' Here I've defined transformSimple, a version of our transform function
+' that doesn't populate the EnergyUse property. More on that in a bit.
+' This is not all that complex, and that's really the beauty of using
+' F# for this type of work. Translations are simple functions mapping
+' one type to another.
+
+---
+
+### World Bank Data
+
+' However, we want additional data about energy use for the location.
+' Let's use the World Bank type provider to look up energy use for the
+' country location to demonstrate a) the ability to mix data sets from
+' different sources easily and b) provide something more useful than
+' simple location data for our ETL application.
+
+---
+
+### Define `transform`
+
+*)
+
+let extractEnergyUse (result:Location.Result)
+        (wb:WorldBankData.ServiceTypes.WorldBankDataService) =
+    wb.Countries
+    |> Seq.tryFind (fun x ->
+        result.Components.Country.StartsWith(x.Name))
+    |> Option.map (fun x ->
+        x.Indicators.``Energy use (kg of oil equivalent per capita)``)
+
+let transform (source:Location.Root) : LocationResult list =
+    let wb = WorldBankData.GetDataContext()
+    [ for result in source.Results ->
+        let energyUse = extractEnergyUse result wb
+        { DisplayName = result.Formatted
+          Latitude = float result.Geometry.Lat
+          Longitude = float result.Geometry.Lng
+          City = result.Components.City
+          State = result.Components.State
+          Country = result.Components.Country
+          CountryCode = result.Components.Iso31661Alpha2
+          EnergyUse = energyUse }
+    ]
+
+(**
+
+' The World Bank type provider already understands how to translate
+' HTTP requests from the World Bank and provides a number of indicators.
+' Define extractEnergyUse to retrieve World Bank indicators for each
+' result. We'll also parameterize the data context used to access
+' the World Bank so we don't have to re-create it for each request.
+
+---
+
+### Persisting Data
+
+' You may typically use SQL databases when manipulating data, but we'll
+' use CSV for this exercise. Fortunately, FSharp.Data provides the CsvProvider
+' with which we can read from and create CSV files.
+
+---
+
+### CsvProvider
+
+*)
+
+type LocationSink =
+    CsvProvider<"Location (string),Latitude (float),Longitude (float),City (string),State (string),Country (string),CountryCode (string)">
+type EnergyUseSink =
+    CsvProvider<"CountryCode (string),EnergyUse (float)">
+
+(**
+
+' You can find the full headers in the LocationSinkHeaders.txt and
+' EnergyUseSinkHeaders.txt files in the exercises folder.
+
+---
+
+### Define `load`
+
+*)
+
+let load (data:LocationResult list) =
+    let locations, energyUse =
+        [ for row in data ->
+            let location =
+                LocationSink.Row(
+                    row.DisplayName, row.Latitude,
+                    row.Longitude, row.City,
+                    row.State, row.Country,
+                    row.CountryCode
+                )
+            let usage =
+                match row.EnergyUse with
+                | Some i ->
+                    [ for y in 1960..2012 ->
+                        EnergyUseSink.Row(row.CountryCode, i.[y]) ]
+                | None -> []
+            location, usage
+        ]
+        |> List.unzip
+
+(**
+
+' Once again, this is quite a lot of code in one snippet.
+' We are defining a list comprehension that traverses each
+' LocationResult and builds up pairs of LocationSink.Row and
+' EnergyUseSink.Row list results. We then unzip them to separate
+' the two lists.
+
+---
+
+### Define `load` (cont)
+
+*)
+    do
+        use locationSink = new LocationSink(locations)
+        locationSink.Save("locations.csv")
+    do
+        let distinct =
+            List.concat energyUse
+            |> List.distinctBy (fun x -> x.CountryCode)
+        use energyUseSink = new EnergyUseSink(distinct)
+        energyUseSink.Save("energyUse.csv")
+
+(**
+
+' Now that we have the results, we need to create the CSV files.
+' We can load the row lists into their respective Sink types
+' and call Save, passing a file name.
+' For energyUse, since we may have multiple locations within the
+' same country, let's make sure to capture only distinct results
+' to avoid duplicates.
+' You would follow a similar approach when working with a SQL database.
+
+---
+
+### Define `run`
+
+*)
+
+let run city =
+    let data = (extract >> transform) city
+    load data
+
+(**
+
+' Let's define a run function to make it easier to run everything together.
+' Try it out. What sort of results are you getting? Look at the CSV results.
+' Are they what you would expect?
+' You can run just the `let data = (extract >> transform) "City"` to see the
+' LocationResults directly.
+
+---
+
+### Iterating Design
+
+' I'd like to point out at this point that this would be a good time to move
+' our types to a library .fs file. However, we will leave them here for now.
+
+---
+
+![ecstasy](images/ecstasy.png)
 
 ***
 
 ## Testing
 
+' Let's take an opportunity to test our code. There are multiple kinds of tests,
+' and we'll start with some simple performance testing. This won't be anything
+' spectacular; we'll simply leverage a directive available in F# Interactive.
+
+---
+
+### `#time`
+
+    > #time;;
+
+    --> Timing now on
+
+    > run "Houston";;
+    Real: 00:00:00.970, CPU: 00:00:00.093, GC gen0: 1, gen1: 0, gen2: 0
+    val it : unit = ()
+
+    > #time;;
+
+    --> Timing now off
+
+    >
+
+' There are multiple kinds of tests,
+' and we'll start with some simple performance testing. This won't be anything
+' spectacular; we'll simply leverage a directive available in F# Interactive.
+
+---
+
+![ecstasy](images/ecstasy.png)
+
+---
+
+### Unit Testing with xUnit.net
+
+' This won't work well for scripts since xunit uses a separate test runner
+' that uses reflection to find tests using attributes.
+
+---
+
+![agony](images/agony.png)
+
+---
+
+### Unit Testing with NUnit
+
+' See above.
+
+---
+
+![agony](images/agony.png)
+
+---
+
+### Unit Testing with Expecto
+
+*)
+
+#load "../.paket/load/net461/main.group.fsx"
+
+open Expecto
+
+(**
+
+' At last, a testing library that will run in a script!
+' First, create a new file, Tests.fsx, then open Expecto.
+
+---
+
+### Write a Test
+
+*)
+
+let addTest =
+    testCase "An addition test" <| fun () ->
+        let expected = 4
+        Expect.equal expected (2+2) "2+2 = 4"
+
+Tests.runTests defaultConfig addTest
+
+(**
+
+    [15:21:46 INF] EXPECTO? Running tests... <Expecto>
+    [15:21:46 INF] EXPECTO! 1 tests run in 00:00:00.0297663 – 1 passed, 0 ignored, 0 failed, 0 errored. ᕙ໒( ˵ ಠ
+    ╭͜ʖ╮ ಠೃ ˵ )७ᕗ <Expecto>
+    val it : int = 0
+
+' Let's start with a simple test. Well, that was easy. You define a testCase by
+' giving it a name and a function to run. You verify the expected result using
+' Expect.equal, which takes an expected value, the actual value, and a message
+' if the test case fails.
+
+---
+
+### Write a Failing Test
+
+*)
+
+let failTest =
+    testCase "Failing test" <| fun () ->
+        Expect.equal 1 2 "1 <> 2"
+
+Tests.runTests defaultConfig failTest
+
+(**
+
+    [15:29:39 INF] EXPECTO? Running tests... <Expecto>
+    [15:29:39 ERR] Failing test failed in 00:00:00.0150000.
+    1 <> 2. Actual value was 1 but had expected it to be 2.
+      s:\scripting-workshop\slides\index.fsx(4,1): FSI_0005.failTest@4-21.Invoke(String x)
+     <Expecto>
+    [15:29:39 INF] EXPECTO! 1 tests run in 00:00:00.0270684 – 0 passed, 0 ignored, 1 failed, 0 errored. ( ರ Ĺ̯ ರ
+    ೃ ) <Expecto>
+    val it : int = 1
+
+' Write a failing test. Here you can see the test case name and message in the output,
+' making it quite easy to identify the culprit. 
+
+---
+
+*)
+
+let multTest =
+    testCase "A multiplication test" <| fun () ->
+        let expected = 4
+        Expect.equal expected (2*2) "2*2 = 4"
+
+let intTests =
+    testList "Integer math tests" [
+        addTest
+        multTest
+    ]
+
+Tests.runTests defaultConfig intTests
+
+(**
+
+    [15:27:37 INF] EXPECTO? Running tests... <Expecto>
+    [15:27:37 INF] EXPECTO! 2 tests run in 00:00:00.0019015 – 2 passed, 0 ignored, 0 failed, 0 errored. ᕙ໒( ˵ ಠ
+    ╭͜ʖ╮ ಠೃ ˵ )७ᕗ <Expecto>
+    val it : int = 0
+
+' In Expecto, tests are values, and you can group them and run them in their groups.
+
+---
+
+![ecstasy](images/ecstasy.png)
+
+---
+
+### FsCheck
+
+*)
+
+let config = { FsCheckConfig.defaultConfig with maxTest = 10000 }
+
+let properties =
+    testList "FsCheck samples" [
+        testProperty "Addition is commutative" <| fun a b ->
+            a + b = b + a
+
+        testProperty "Reverse of reverse of a list is the original list" <|
+            fun (xs:list<int>) -> List.rev (List.rev xs) = xs
+
+        // you can also override the FsCheck config
+        testPropertyWithConfig config "Product is distributive over addition" <|
+            fun a b c -> a * (b + c) = a * b + a * c
+    ]
+
+Tests.runTests defaultConfig properties
+
+(**
+
+    [15:33:04 INF] EXPECTO? Running tests... <Expecto>
+    [15:33:04 INF] EXPECTO! 3 tests run in 00:00:00.1008472 – 3 passed, 0 ignored, 0 failed, 0 errored. ᕙ໒( ˵ ಠ
+    ╭͜ʖ╮ ಠೃ ˵ )७ᕗ <Expecto>
+
+---
+
+### Group testLists
+
+*)
+
+let allTests =
+    testList "all tests" [
+        intTests
+        properties
+    ]
+
+Tests.runTests defaultConfig allTests
+
+(**
+
+    [15:34:09 INF] EXPECTO? Running tests... <Expecto>
+    [15:34:09 INF] EXPECTO! 5 tests run in 00:00:00.1008795 – 5 passed, 0 ignored, 0 failed, 0 errored. ᕙ໒( ˵ ಠ
+    ╭͜ʖ╮ ಠೃ ˵ )७ᕗ <Expecto
+
+' Lastly, you can even group lists of tests and run them all together.
+
+---
+
+![ecstasy](images/ecstasy.png)
+
+---
+
+### Write some tests!
+
+' Take a few minutes to write a few tests for the ETL functions we just wrote.
+' Given we used type providers, it may be difficult to think through what tests
+' to write. There's no correct answer. You may want to verify the CSV files were
+' written or that the transform function returned 1 or more results.
+
 ***
 
 ## Visualizing Data Sets
+
+*)
+
+(**
 
 ***
 
@@ -1010,19 +1501,21 @@ let test1 = ConfigurationManager.ConnectionStrings.["Test1"]
 
 ***
 
-## Leveraging Scripts for <acronym title="Extract-Transform-Load">ETL</acronym>
+## DEMO
+
+### Using Scripts in a Project
 
 ***
 
-## Using Scripts in a Project
+## DEMO
+
+### Debugging Scripts
 
 ***
 
-## Debugging Scripts
+## DEMO
 
-***
-
-## Build and Deploy Scripting with FAKE 
+### Build and Deploy Scripting with FAKE 
 
 ***
 
