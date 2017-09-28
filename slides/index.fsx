@@ -9,6 +9,7 @@
 *)
 
 (*** hide ***)
+open System
 let originalCwd = System.Environment.CurrentDirectory
 let parentDir =
     let dir = System.IO.DirectoryInfo(__SOURCE_DIRECTORY__)
@@ -417,24 +418,6 @@ Create a new file, `Library.fs`.
 
 ---
 
-### Iterating Design
-
-' Incidentally, this is a very common workflow when designing an application's types.
-' You write some code, test it out, modify, then move it into a source file once you
-' like the design. You can leave some of the exercise code in the script for later
-' iteration or evaluation.
-' Design applies to both domain modeling and data modeling.
-' For domain modeling, you may want to use scripts to understand
-' the ramifications of certain design decisions. For example,
-' is a record the right type, or might you need a discriminated
-' union to better cover multiple cases, especially if you may need
-' more in the future. How might units of measure help or hinder?
-' With respect to data modeling, it can be helpful to throw the
-' data in a plot. Interactive sessions work well for this, and you
-' can check calculations more easily with visualizations.
-
----
-
 ### Library.fs
 
 *)
@@ -522,6 +505,26 @@ open Library
 
 ***
 
+## Iterating Design
+
+![ecstasy](images/ecstasy.png)
+
+' Incidentally, this is a very common workflow when designing an application's types.
+' You write some code, test it out, modify, then move it into a source file once you
+' like the design. You can leave some of the exercise code in the script for later
+' iteration or evaluation.
+' Design applies to both domain modeling and data modeling.
+' For domain modeling, you may want to use scripts to understand
+' the ramifications of certain design decisions. For example,
+' is a record the right type, or might you need a discriminated
+' union to better cover multiple cases, especially if you may need
+' more in the future. How might units of measure help or hinder?
+' With respect to data modeling, it can be helpful to throw the
+' data in a plot. Interactive sessions work well for this, and you
+' can check calculations more easily with visualizations.
+
+***
+
 ## Referencing NuGet Packages
 
 ' We now know how to reference assmblies available on the local machine,
@@ -592,10 +595,10 @@ open Library
 
 ### Generate Load Scripts
 
-    ./.paket/paket.exe generate-load-scripts --group main --type fsx --framework net462
+    ./.paket/paket.exe generate-load-scripts --group main --type fsx --framework net461
 
 ' Run the paket command to generate fsx load scripts for group main and
-' framework net462. This will generate the references necessary for our
+' framework net461. This will generate the references necessary for our
 ' use and no more. Note that you can specify different groups and types,
 ' the other type being csx for C# Interactive.
 ' NOTE: if you are on Mac or Linux, you'll need to prefix the above with `mono`.
@@ -606,7 +609,10 @@ open Library
 
 *)
 
-#load "../.paket/load/net462/main.group.fsx"
+#load "../.paket/load/net461/main.group.fsx"
+
+(*** hide ***)
+#load "../.paket/load/net461/Completed/completed.group.fsx"
 
 (**
 
@@ -631,6 +637,7 @@ open Library
     <?xml version="1.0" encoding="utf-8"?>
     <configuration>
       <appSettings>
+        <add key="AppKey" value="7B7EB384FEBA4409B56066FF63F1E8D0" />
         <add key="test2" value="Some Test Value 5" />
         <add key="TestInt" value="102" />
         <add key="TestBool" value="True" />
@@ -658,11 +665,12 @@ open Library
 
 open System.Configuration
 
-let appSettings = ConfigurationManager.AppSettings
-(*** define-value: app-settings-test2 ***)
-appSettings.["test2"]
+ConfigurationManager.AppSettings.["test2"]
 
-(*** include-value: app-settings-test2 ***)
+(*** hide ***)
+let appSettingsTest2 = ConfigurationManager.AppSettings.["test2"]
+
+(*** include-value: appSettingsTest2 ***)
 
 (**
 
@@ -683,10 +691,9 @@ appSettings.["test2"]
 
 *)
 
-(*** define-output: fsi-current-directory ***)
-printfn "%s" System.Environment.CurrentDirectory
+System.Environment.CurrentDirectory
 
-(*** include-output: fsi-current-directory ***)
+(*** include-value: originalCwd ***)
 
 (**
  
@@ -702,10 +709,9 @@ printfn "%s" System.Environment.CurrentDirectory
 *)
 
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
-(*** define-output: set-current-directory ***)
-printfn "%s" System.Environment.CurrentDirectory
+System.Environment.CurrentDirectory
 
-(*** include-output: set-current-directory ***)
+(*** include-value:System.Environment.CurrentDirectory ***)
 
 (**
 
@@ -718,7 +724,7 @@ printfn "%s" System.Environment.CurrentDirectory
 
 *)
 
-(*** include-value: app-settings-test2 ***)
+(*** include-value: appSettingsTest2 ***)
 
 (**
 
@@ -738,13 +744,253 @@ printfn "%s" System.Environment.CurrentDirectory
 
 ---
 
-### FSharp.Configuration Type Provider
+### Solution 1: FSharp.Configuration
 
 ' We'll now take a look at the FSharp.Configuration type provider.
 ' This is an excellent tool for accessing config file values and even 
 ' attempts to type check them for you.
 
 ---
+
+*)
+
+open FSharp.Configuration
+
+type Settings1 = AppSettings<"App.config">
+
+// Enter:
+Settings1.Test2
+
+(**
+
+' What do you see when you try to enter `Settings1.Test2`?
+
+---
+
+    error FS0039: The field, constructor or member 'Test2' is not defined.
+
+' The most obvious thing, and the one that works when using the type provider in a library
+' or executable, fails in a script file. When using FSharp.Configuration in a script, you
+' have to also set the executable file.
+
+---
+
+*)
+
+Settings1.SelectExecutableFile "AppSettings.fsx"
+
+Settings1.Test2
+
+(**
+
+' For a script, that is the script filename. Add the above lines and try to enter
+' `Settings1.Test2` again. Now what do you see?
+
+---
+
+    error FS0039: The field, constructor or member 'Test2' is not defined.
+
+' What's going on? If you think about it, you'll realize the problem. What's the
+' name of the `config` file once you've compiled a library or executable project?
+' It's Name.exe.config or Name.dll.config. FSharp.Configuration is anticipating the
+' same thing here.
+
+---
+
+### Rename App.config to AppSettings.fsx.config
+
+*)
+
+type Settings2 = AppSettings<"AppSettings.fsx.config">
+Settings2.SelectExecutableFile "AppSettings.fsx"
+
+Settings2.Test2
+
+(**
+
+' Rename the App.config to AppSettings.fsx.config, the name the file would have
+' if you were to compile an application and try it again.
+' Note: I've renamed my Settings type here purely to help with generating slides.
+
+---
+
+    error FS0039: The field, constructor or member 'Test2' is not defined.
+
+---
+
+![agony](images/agony.png)
+
+' Are you serious?! What is going on here? Why are you playing tricks on me?!
+' This is the point where you begin to swear off scripting. Why must it be so
+' hard?!
+
+---
+
+*)
+
+let [<Literal>] AppSettingsConfig =
+    __SOURCE_DIRECTORY__ + "/AppSettings.fsx.config"
+type Settings = AppSettings<AppSettingsConfig>
+let [<Literal>] AppSettingsExe =
+    __SOURCE_DIRECTORY__ + "/AppSettings.fsx"
+Settings.SelectExecutableFile AppSettingsExe
+
+Settings.Test2
+
+(**
+
+' It turns out you need to specify the full path for this to work properly in scripts.
+' You can use the `__SOURCE_DIRECTORY__` directive to git the path to the current script
+' and then add the remaining file name part. This can be captured as a string literal,
+' so you can use it in places like type provider parameters.
+' If you run this now, you'll get the value from Test2.
+' Try some of the other settings, and you'll see that the type provider is quite handy
+' at returning values that are typed.
+
+---
+
+![ecstasy](images/ecstasy.png)
+
+---
+
+### Retrieve the value for AppKey
+
+*)
+
+(*** hide ***)
+let [<Literal>] Config = __SOURCE_DIRECTORY__ + "/index.fsx.config"
+type ScriptSettings = AppSettings<Config>
+let [<Literal>] Exec = __SOURCE_DIRECTORY__ + "/index.fsx"
+ScriptSettings.SelectExecutableFile Exec
+let appKey = ScriptSettings.AppKey
+
+(*** show ***)
+Settings.AppKey
+
+(**
+
+---
+
+*)
+
+(*** include-value:appKey ***)
+
+(**
+
+' The poor type provider was tricked. It found a string with the same length and
+' alphanumeric characteristics as a Guid, so it converted it.
+
+---
+
+![agony](images/agony.png)
+
+---
+
+### Solution 2: Override ConfigurationManager
+
+' When all else fails, you can replace the System.Configuration.ConfigurationManager
+' with a simple script.
+
+---
+
+### Configuration.fsx
+
+*)
+
+#r "System.Xml.dll"
+#r "System.Xml.Linq.dll"
+open System.Xml
+open System.Xml.Linq
+
+(**
+
+' Create a new file called Configuration.fsx. At the top, add references to System.Xml.dll
+' and System.Xml.Linq.dll, then open those namespaces.
+
+---
+
+### Configuration.fsx
+
+*)
+
+let [<Literal>] AppSettingsPath = __SOURCE_DIRECTORY__ + "/App.config"
+
+(**
+
+' Here we again use the absolute path string literal to specify the config file we want
+' to reference. This makes the script less portable, but it's the only way to properly
+' hijack the ConfigurationManager class, which uses static members.
+
+---
+
+### Configuration.fsx
+
+*)
+
+type ConfigurationManager() =
+    static let config = XDocument.Load AppSettingsPath
+    static let section (config:XDocument) name key value =
+        query {
+            for els in config.Descendants(XName.Get name) do
+            for el in els.Descendants(XName.Get "add") do
+            let k = el.Attribute(XName.Get key).Value 
+            let v = el.Attribute(XName.Get value).Value 
+            select (k,v)
+        } |> dict
+    static let appSettings =
+        section config "appSettings" "key" "value"
+    static let connectionStrings =
+        section config "connectionStrings" "name" "connectionString"
+    static member AppSettings = appSettings
+    static member ConnectionStrings = connectionStrings
+
+(**
+
+' The guts of the ConfigurationManager class are not that complex. We have a static, let-bound
+' function that loads and queries the provides config file and returns it as a dictionary, based
+' on the section. I've only implemented the appSettings and connectionStrings portions here, but
+' you can certainly add sections you want or need.
+
+---
+
+### Use Configuration.fsx
+
+*)
+
+#load "Configuration.fsx"
+open Configuration
+
+ConfigurationManager.AppSettings.["AppKey"]
+(*** hide ***)
+let appKey2 = ConfigurationManager.AppSettings.["AppKey"]
+(*** include-value:appKey2 ***)
+
+ConfigurationManager.ConnectionStrings.["Test1"]
+(*** hide ***)
+let test1 = ConfigurationManager.ConnectionStrings.["Test1"]
+
+(*** include-value:test1 ***)
+
+(**
+
+' Go back to your AppSettings.fsx script and enter the following lines. Remembering that the
+' script name is used as the namespace, we open Configuration after loading the file. So long
+' as you load and open this Configuraiton after System.Configuration, this will hide the
+' System.Configuration.ConfigurationManager, and you will be able to access whatever file you've
+' specified in the Configuration.fsx script.
+
+---
+
+![ecstasy](images/ecstasy.png)
+
+---
+
+### Remember: Always Use `__SOURCE_DIRECTORY__`
+
+' You now have two possible solutions you can leverage in your scripts. These strategies
+' work for connection strings used with the various type providers, as well. It's always
+' a good strategy to prefix a path to a config file with `__SOURCE_DIRECTORY__` to avoid
+' issues with your scripts.
 
 ***
 
