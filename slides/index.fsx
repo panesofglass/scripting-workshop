@@ -1486,6 +1486,7 @@ Tests.runTests defaultConfig allTests
 ' Given we used type providers, it may be difficult to think through what tests
 ' to write. There's no correct answer. You may want to verify the CSV files were
 ' written or that the transform function returned 1 or more results.
+' Don't forget to #load "App.fsx"!
 
 ***
 
@@ -1504,6 +1505,16 @@ Tests.runTests defaultConfig allTests
 ## DEMO
 
 ### Using Scripts in a Project
+
+---
+
+### Compiled or Interactive
+
+#### Why choose?
+
+' Trying to run code in F# interactive that has been written
+' as a compiled library or executable can sometimes be tricky.
+' We'll look at techniques to make this less difficult.
 
 ***
 
@@ -1556,11 +1567,6 @@ Tests.runTests defaultConfig allTests
 
 ***
 
-![agony](images/agony.png)
-![ecstasy](images/ecstasy.png)
-
----
-
 ### Communicating
 
 1. [Documentation](http://fsprojects.github.io/ProjectScaffold/)
@@ -1578,15 +1584,5 @@ Tests.runTests defaultConfig allTests
 ' not what you think.
 ' Try running `System.Environment.CurrentDirectory` and see
 ' what FSI returns.
-
----
-
-### Compiled or Interactive
-
-#### Why choose?
-
-' Trying to run code in F# interactive that has been written
-' as a compiled library or executable can sometimes be tricky.
-' We'll look at techniques to make this less difficult.
 
 *)
