@@ -1880,6 +1880,7 @@ Take a few minutes to write a few tests for the ETL functions we just wrote.<br/
 Given we used type providers, it may be difficult to think through what tests<br/>
 to write. There's no correct answer. You may want to verify the CSV files were<br/>
 written or that the transform function returned 1 or more results.<br/>
+Don't forget to #load "App.fsx"!<br/>
 </aside>
 </section>
 </section>
@@ -1890,8 +1891,19 @@ written or that the transform function returned 1 or more results.<br/>
 <h2>Accessing Command Line Parameters</h2>
 </section>
 <section >
+<section >
 <h2>DEMO</h2>
 <h3>Using Scripts in a Project</h3>
+</section>
+<section >
+<h3>Compiled or Interactive</h3>
+<h4>Why choose?</h4>
+<aside class="notes">
+Trying to run code in F# interactive that has been written<br/>
+as a compiled library or executable can sometimes be tricky.<br/>
+We'll look at techniques to make this less difficult.<br/>
+</aside>
+</section>
 </section>
 <section >
 <h2>DEMO</h2>
@@ -1936,10 +1948,6 @@ As an example, this slide deck is build using an F# script and FsReveal.<br/>
 </section>
 <section >
 <section >
-<p><img src="images/agony.png" alt="agony" />
-<img src="images/ecstasy.png" alt="ecstasy" /></p>
-</section>
-<section >
 <h3>Communicating</h3>
 <ol>
 <li><a href="http://fsprojects.github.io/ProjectScaffold/">Documentation</a></li>
@@ -1956,15 +1964,6 @@ When running F# interactive, the current directory is often<br/>
 not what you think.<br/>
 Try running `System.Environment.CurrentDirectory` and see<br/>
 what FSI returns.<br/>
-</aside>
-</section>
-<section >
-<h3>Compiled or Interactive</h3>
-<h4>Why choose?</h4>
-<aside class="notes">
-Trying to run code in F# interactive that has been written<br/>
-as a compiled library or executable can sometimes be tricky.<br/>
-We'll look at techniques to make this less difficult.<br/>
 </aside>
 </section>
 </section>
