@@ -108,11 +108,11 @@ let setCwd dir =
 ## What we will cover
 
 * Creating and running scripts
+* Iterating design
 * Loading and referencing files
 * Referencing NuGet packages
 * Accessing values from .config files
 * Retrieving data
-* Design iteration
 * Testing
 * Visualizing data sets
 * Accessing command line parameters
@@ -417,6 +417,24 @@ Create a new file, `Library.fs`.
 
 ---
 
+### Iterating Design
+
+' Incidentally, this is a very common workflow when designing an application's types.
+' You write some code, test it out, modify, then move it into a source file once you
+' like the design. You can leave some of the exercise code in the script for later
+' iteration or evaluation.
+' Design applies to both domain modeling and data modeling.
+' For domain modeling, you may want to use scripts to understand
+' the ramifications of certain design decisions. For example,
+' is a record the right type, or might you need a discriminated
+' union to better cover multiple cases, especially if you may need
+' more in the future. How might units of measure help or hinder?
+' With respect to data modeling, it can be helpful to throw the
+' data in a plot. Interactive sessions work well for this, and you
+' can check calculations more easily with visualizations.
+
+---
+
 ### Library.fs
 
 *)
@@ -698,6 +716,8 @@ printfn "%s" System.Environment.CurrentDirectory
 
 ---
 
+*)
+
 (*** include-value: app-settings-test2 ***)
 
 (**
@@ -724,23 +744,11 @@ printfn "%s" System.Environment.CurrentDirectory
 ' This is an excellent tool for accessing config file values and even 
 ' attempts to type check them for you.
 
+---
+
 ***
 
 ## Retrieving Data
-
-***
-
-## Design Iteration
-
-' Design applies to both domain modeling and data modeling.
-' For domain modeling, you may want to use scripts to understand
-' the ramifications of certain design decisions. For example,
-' is a record the right type, or might you need a discriminated
-' union to better cover multiple cases, especially if you may need
-' more in the future. How might units of measure help or hinder?
-' With respect to data modeling, it can be helpful to throw the
-' data in a plot. Interactive sessions work well for this, and you
-' can check calculations more easily with visualizations.
 
 ***
 
