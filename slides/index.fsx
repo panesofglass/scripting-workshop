@@ -356,14 +356,6 @@ printfn "%s: %i" x.Name result
 
 ---
 
-### Finding FSI
-
-* Windows: C:\Program Files (x86)\Microsoft SDKs\F#\<version>\Framework\<version>\
-* e.g. C:\Program Files (x86)\Microsoft SDKs\F#\4.1\Framework\v4.0\fsiAnyCPU.exe
-* Mac/Linux: fsharpi (via mono)
-
----
-
 ### References
 
 *)
@@ -621,6 +613,20 @@ open Library
     nuget FSharp.Configuration
     nuget FSharp.Data
     nuget XPlot.GoogleCharts
+
+---
+
+### Download paket.exe
+
+    cd ../
+    ./.paket/paket.bootstrapper.exe
+
+---
+
+### Install dependencies
+
+    cd ../
+    ./.paket/paket.exe install
 
 ---
 
@@ -1208,7 +1214,7 @@ let transform (source:Location.Root) : LocationResult list =
 type LocationSink =
     CsvProvider<"Location (string),Latitude (float),Longitude (float),City (string),State (string),Country (string),CountryCode (string)">
 type EnergyUseSink =
-    CsvProvider<"CountryCode (string),EnergyUse (float)">
+    CsvProvider<"CountryCode (string),Year (int),EnergyUse (float)">
 
 (**
 

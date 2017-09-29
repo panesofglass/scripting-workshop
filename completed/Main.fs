@@ -64,7 +64,7 @@ let transform (source:Location.Root) : LocationResult list =
 
 // Persist data
 type LocationSink = CsvProvider<"Location (string),Latitude (float),Longitude (float),City (string),State (string),Country (string),CountryCode (string)">
-type EnergyUseSink = CsvProvider<"CountryCode (string),EnergyUse (float)">
+type EnergyUseSink = CsvProvider<"CountryCode (string),Year (int),EnergyUse (float)">
 
 let load (data:LocationResult list) =
     let locations, energyUse =
@@ -83,7 +83,7 @@ let load (data:LocationResult list) =
                 match row.EnergyUse with
                 | Some i ->
                     [ for y in 1960..2012 ->
-                        EnergyUseSink.Row(row.CountryCode, i.[y]) ]
+                        EnergyUseSink.Row(row.CountryCode, y, i.[y]) ]
                 | None -> []
             location, usage
         ]
