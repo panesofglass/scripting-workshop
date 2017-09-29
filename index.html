@@ -75,6 +75,7 @@ it has some frustrating rough edges.<br/>
 In this workshop, we will build a simple ETL application. Along the<br/>
 way, I'll highlight the challenging areas and provide solutions for<br/>
 overcoming them.<br/>
+Show the completed script running.<br/>
 </aside>
 </section>
 <section >
@@ -160,8 +161,9 @@ through a few examples.<br/>
 <section >
 <section >
 <h2>Getting Started</h2>
-<p><img src="images/ecstasy.png" alt="ecstasy" /></p>
+<p><a href="https://github.com/panesofglass/scripting-workshop">https://github.com/panesofglass/scripting-workshop</a></p>
 <aside class="notes">
+Please go to GitHub and pull down the scripting-workshop repository.<br/>
 In order to begin, you must have F# installed. I assume you have installed<br/>
 it already, but if not, please go to http://fsharp.org/ to find the instructions<br/>
 for your environment, or ask for help as we begin the first exercise.<br/>
@@ -169,6 +171,29 @@ F# Interactive can be run from the command line or from several IDEs and<br/>
 text editors. To begin, please find the correct command line executable<br/>
 for your environment. We are going to start simply using the CLI tool for now.<br/>
 </aside>
+</section>
+<section >
+<h3>Scripting Workshop</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+<span class="l">8: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="o">/</span><span class="i">scripting</span><span class="o">-</span><span class="i">workshop</span>
+  <span class="o">/.</span><span class="i">paket</span>        <span class="o">&lt;-</span> <span class="i">Paket</span> <span class="i">related</span>
+  <span class="o">/</span><span class="i">completed</span>     <span class="o">&lt;-</span> <span class="k">in</span> <span class="i">case</span> <span class="i">you</span> <span class="i">get</span> <span class="i">stuck</span>
+  <span class="o">/</span><span class="i">exercises</span>     <span class="o">&lt;-</span> <span class="i">working</span> <span class="i">directory</span>
+  <span class="o">/</span><span class="i">slides</span>        <span class="o">&lt;-</span> <span class="i">ignore</span>
+  <span class="o">-</span> <span class="i">paket</span><span class="o">.</span><span class="i">dependencies</span>
+  <span class="o">-</span> <span class="i">paket</span><span class="o">.</span><span class="i">lock</span>
+  <span class="o">-</span> <span class="o">..</span><span class="o">.</span> <span class="i">other</span> <span class="i">files</span> 
+</code></pre></td>
+</tr>
+</table>
 </section>
 <section >
 <h3>Finding FSI on Windows</h3>
@@ -649,6 +674,32 @@ By opening the `Library` namespace, we can get the script to run properly.<br/>
 Alternatively, you could provide a namespace in `Library.fs`, which is<br/>
 more practical since you'll want that if you plan to use it in a library<br/>
 or executable.<br/>
+</aside>
+</section>
+<section >
+<h3>Library.fs</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="i">S</span><span class="o">:</span>
+<span class="i">Files</span> <span class="k">in</span> <span class="i">libraries</span> <span class="k">or</span> <span class="i">multiple</span><span class="o">-</span><span class="i">file</span> <span class="i">applications</span> <span class="i">must</span> <span class="k">begin</span>
+<span class="k">with</span> <span class="i">a</span> <span class="k">namespace</span> <span class="k">or</span> <span class="k">module</span> <span class="i">declaration</span>, <span class="i">e</span><span class="o">.</span><span class="i">g</span><span class="o">.</span> <span class="o">&#39;</span><span class="k">namespace</span> <span class="i">SomeNamespace</span><span class="o">.</span><span class="i">SubNamespace&#39;</span>
+<span class="k">or</span> <span class="o">&#39;</span><span class="k">module</span> <span class="i">SomeNamespace</span><span class="o">.</span><span class="i">SomeModule&#39;</span><span class="o">.</span> <span class="i">Only</span> <span class="i">the</span> <span class="i">last</span> <span class="i">source</span> <span class="i">file</span>
+<span class="k">of</span> <span class="i">an</span> <span class="i">application</span> <span class="i">may</span> <span class="i">omit</span> <span class="i">such</span> <span class="i">a</span> <span class="i">declaration</span><span class="o">.</span>
+
+<span class="k">namespace</span> <span class="i">Library</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+If you try to run Script.fsx from the command line, you'll see this error.<br/>
+.fs files _should_ have a namespace or module, so go ahead and add<br/>
+namespace Library to the top to resolve this error.<br/>
 </aside>
 </section>
 <section >
@@ -1993,11 +2044,11 @@ Custom Printers<br/>
 <aside class="notes">
 F# Interactive allows you to define custom printers. These are most<br/>
 common in validating data sets and UIs. We can now remove the calls<br/>
-to Chart.Show above.<br/>
+to Chart.Show above, so long as the chart is the last thing returned.<br/>
 </aside>
 </section>
 <section >
-<h3>Add this to <code>run</code></h3>
+<h3>Add show* to <code>run</code></h3>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 <span class="l">3: </span>
@@ -2014,8 +2065,10 @@ to Chart.Show above.<br/>
 </table>
 <aside class="notes">
 Let's add this to our run function so that we plot out the charts whenever<br/>
-the data set is retrieved. This will act as a visual cue that we have<br/>
-the correct data set. Feel free to add in any tests you created, as well.<br/>
+the data set is retrieved. Make sure you restore the |> Chart.Show in the<br/>
+show functions or they won't display.<br/>
+This will act as a visual cue that we have the correct data set.<br/>
+Feel free to add in any tests you created, as well.<br/>
 Try entering different locations into your interactive session and report<br/>
 on what you are seeing. "San Francisco" is quite interesting.<br/>
 </aside>
@@ -2041,6 +2094,7 @@ The PowerShell works fine, but I wondered whether F# could do it all.<br/>
 </section>
 <section >
 <h3>Argu</h3>
+<p><img src="images/argu-logo.png" alt="Argu" /></p>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">open</span> <span class="i">Argu</span>
@@ -2107,6 +2161,54 @@ arguments initially?<br/>
 </aside>
 </section>
 <section >
+<h3>fsi.CommandLineArgs</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="i">runCLI</span> <span class="i">fsi</span><span class="o">.</span><span class="i">CommandLineArgs</span>
+</code></pre></td>
+</tr>
+</table>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="o">$</span> <span class="i">fsharpi</span> <span class="i">exercises</span><span class="o">/</span><span class="i">App</span><span class="o">.</span><span class="i">fsx</span> <span class="o">--</span><span class="i">city</span> <span class="o">&#39;</span><span class="i">San</span> <span class="i">Francisco&#39;</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+You can access the command line args in a script using fsi.CommandLineArgs.<br/>
+Try running our program above using runCLI fsi.CommandLineArgs<br/>
+What do you get?<br/>
+</aside>
+</section>
+<section >
+<p><img src="images/agony.png" alt="agony" /></p>
+</section>
+<section >
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="i">ERROR</span><span class="o">:</span> <span class="i">unrecognized</span> <span class="i">argument</span><span class="o">:</span> <span class="o">&#39;</span><span class="o">.</span>
+<span class="i">USAGE</span><span class="o">:</span> <span class="i">fsiAnyCPU</span><span class="o">.</span><span class="i">exe</span> [<span class="o">--</span><span class="i">help</span>] <span class="o">--</span><span class="i">city</span> <span class="o">&lt;</span><span class="i">string</span><span class="o">&gt;</span>
+
+<span class="i">OPTIONS</span><span class="o">:</span>
+
+    <span class="o">--</span><span class="i">city</span> <span class="o">&lt;</span><span class="i">string</span><span class="o">&gt;</span>       <span class="i">Enter</span> <span class="i">a</span> <span class="i">location</span> <span class="i">name</span>
+    <span class="o">--</span><span class="i">help</span>                <span class="i">display</span> <span class="i">this</span> <span class="i">list</span> <span class="k">of</span> <span class="i">options</span><span class="o">.</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+When you run your script like an application, the script file becomes<br/>
+one of the arguments. So you need to strip this argument off the top.<br/>
+</aside>
+</section>
+<section >
+<h3>fsi.CommandLineArgs</h3>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
 </pre></td>
@@ -2136,6 +2238,9 @@ a web browser. You should also still see your generated CSV files.<br/>
 </aside>
 </section>
 <section >
+<p><img src="images/ecstasy.png" alt="ecstasy" /></p>
+</section>
+<section >
 <h3>Paket.fsx</h3>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 <span class="l">2: </span>
@@ -2163,7 +2268,7 @@ You  don't remember ever haing to figur.<br/>
 </blockquote>
 </section>
 <section >
-<h3>Reconciliation</h3>
+<h3></h3>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
 </pre></td>
 <td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="i">fsharpi</span> <span class="o">.</span><span class="o">/</span><span class="i">exercises</span><span class="o">/</span><span class="i">App</span><span class="o">.</span><span class="i">fsx</span> <span class="o">--</span><span class="i">client</span> <span class="i">Adelaide</span>
@@ -2172,7 +2277,7 @@ You  don't remember ever haing to figur.<br/>
 </table>
 <aside class="notes">
 You can now specify the city from the command line. This allows us to<br/>
-pull off program data and turn it into something interesting for Tachyus.<br/>
+pull off program data and turn it into something interesting.<br/>
 </aside>
 '
 </section>
@@ -2204,34 +2309,27 @@ We'll look at techniques to make this less difficult.<br/>
 <h1>Review</h1>
 </section>
 <section >
-<section >
 <h2>Deployment Options</h2>
 <aside class="notes">
 As noted earlier, we are not able to go into the details of each option, <br/>
 but I want you at least be aware of some of the options available.<br/>
+As an example, this slide deck is built using a FAKE script and FsReveal,<br/>
+which uses FSharp.Formatting.<br/>
 </aside>
+<p><a href="http://fsprojects.github.io/FsReveal/"><img alt="FsReveal" src="images/logo.png" class="logo" /></a></p>
+<p><a href="https://fake.build/"><img alt="FAKE" src="images/fake.png" class="logo" /></a></p>
+<p><a href="http://bayardrock.github.io/IfSharp/"><img alt="Jupyter Notebooks" src="images/jupyter.png" class="logo" /></a></p>
+<p><a href="https://blogs.msdn.microsoft.com/visualstudio/2016/12/05/azure-notebooks-now-support-f/"><img alt="Azure Notebooks" src="images/azure-notebooks.jpg" class="logo" /></a></p>
+<p><a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-fsharp"><img alt="Azure Functions" src="images/Azure-Functions-Logo.png" class="logo" /></a></p>
+<p><a href="https://github.com/FSharpBristol/FSharp-Template-for-Aws-Lambda"><img alt="AWS Lambda" src="images/aws-lambda.png" class="logo" /></a></p>
 </section>
 <section >
-<h3><a href="http://bayardrock.github.io/IfSharp/">Jupyter Notebooks</a></h3>
-</section>
-<section >
-<h3><a href="https://blogs.msdn.microsoft.com/visualstudio/2016/12/05/azure-notebooks-now-support-f/">Azure Notebooks</a></h3>
-</section>
-<section >
-<h3><a href="https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-fsharp">Azure Functions</a></h3>
-</section>
-<section >
-<h3><a href="https://github.com/FSharpBristol/FSharp-Template-for-Aws-Lambda">AWS Lambda</a></h3>
-</section>
-<section >
-<h3><a href="http://fsprojects.github.io/FsReveal/">FsReveal slides</a></h3>
+<h1>Summary</h1>
+<img alt="ecstasy" src="images/ecstasy.png" class="image-row" />
+<img alt="agony" src="images/agony.png" class="image-row" />
 <aside class="notes">
-As an example, this slide deck is build using an F# script and FsReveal.<br/>
+<br/>
 </aside>
-</section>
-</section>
-<section >
-<h1>Questions?</h1>
 </section>
 
 
