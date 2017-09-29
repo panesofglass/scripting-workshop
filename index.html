@@ -2268,18 +2268,35 @@ You  don't remember ever haing to figur.<br/>
 </blockquote>
 </section>
 <section >
-<h3></h3>
+<h3>End-to-end</h3>
+<p>Remove:</p>
 <table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
 </pre></td>
-<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="i">fsharpi</span> <span class="o">.</span><span class="o">/</span><span class="i">exercises</span><span class="o">/</span><span class="i">App</span><span class="o">.</span><span class="i">fsx</span> <span class="o">--</span><span class="i">client</span> <span class="i">Adelaide</span>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="o">/</span><span class="i">scripting</span><span class="o">-</span><span class="i">workshop</span>
+  <span class="o">/.</span><span class="i">paket</span>
+    <span class="o">/</span><span class="i">load</span>
+    <span class="o">-</span> <span class="i">paket</span><span class="o">.</span><span class="i">exe</span>
+  <span class="o">/</span><span class="i">packages</span>
+  <span class="o">/</span><span class="i">paket</span><span class="o">-</span><span class="i">files</span>
 </code></pre></td>
 </tr>
 </table>
+<p>Run: fsharpi ./exercises/App.fsx --client Adelaide</p>
 <aside class="notes">
 You can now specify the city from the command line. This allows us to<br/>
-pull off program data and turn it into something interesting.<br/>
+pull off program data and turn it into something that can restore<br/>
+packages, generate load scripts, and run all within one script.<br/>
+With the lines at the top of your script, you should be able to <br/>
+delete <br/>
 </aside>
-'
+</section>
+<section >
+<p><img src="images/ecstasy.png" alt="ecstasy" /></p>
 </section>
 </section>
 <section >
@@ -2328,7 +2345,7 @@ which uses FSharp.Formatting.<br/>
 <img alt="ecstasy" src="images/ecstasy.png" class="image-row" />
 <img alt="agony" src="images/agony.png" class="image-row" />
 <aside class="notes">
-<br/>
+Review what we covered.<br/>
 </aside>
 </section>
 
