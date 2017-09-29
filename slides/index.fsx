@@ -1788,13 +1788,28 @@ Paket.generateLoadScripts "net461"
 
 ---
 
-### 
+### End-to-end
 
-    fsharpi ./exercises/App.fsx --client Adelaide
+Remove:
+
+    /scripting-workshop
+      /.paket
+        /load
+        - paket.exe
+      /packages
+      /paket-files
+
+Run: fsharpi ./exercises/App.fsx --client Adelaide
 
 ' You can now specify the city from the command line. This allows us to
-' pull off program data and turn it into something interesting.
-'
+' pull off program data and turn it into something that can restore
+' packages, generate load scripts, and run all within one script.
+' With the lines at the top of your script, you should be able to 
+' delete 
+
+---
+
+![ecstasy](images/ecstasy.png)
 
 ***
 
@@ -1856,6 +1871,6 @@ Paket.generateLoadScripts "net461"
 <img alt="ecstasy" src="images/ecstasy.png" class="image-row" />
 <img alt="agony" src="images/agony.png" class="image-row" />
 
-' 
+' Review what we covered.
 
 *)
