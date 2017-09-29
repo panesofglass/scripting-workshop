@@ -1885,10 +1885,261 @@ Don't forget to #load "App.fsx"!<br/>
 </section>
 </section>
 <section >
+<section >
 <h2>Visualizing Data Sets</h2>
+<h3><a href="https://tahahachana.github.io/XPlot/">XPlot</a></h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">open</span> <span class="i">XPlot</span><span class="o">.</span><span class="i">GoogleCharts</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+One of the benefits of scripts is being able to print out charts.<br/>
+XPlot provides several options, including GoogleCharts and Plotly.<br/>
+We'll use the GoogleCharts library for our sample app.<br/>
+</aside>
 </section>
 <section >
+<p><img src="images/ecstasy.png" alt="ecstasy" /></p>
+</section>
+<section >
+<h3>Show Locations</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">showMap</span> (<span class="i">data</span><span class="o">:</span><span class="i">LocationResult</span> <span class="i">list</span>) <span class="o">=</span>
+    <span class="i">data</span>
+    <span class="o">|&gt;</span> <span class="i">List</span><span class="o">.</span><span class="i">map</span> (<span class="k">fun</span> <span class="i">x</span> <span class="k">-&gt;</span> <span class="i">x</span><span class="o">.</span><span class="i">Latitude</span>, <span class="i">x</span><span class="o">.</span><span class="i">Longitude</span>, <span class="i">x</span><span class="o">.</span><span class="i">DisplayName</span>)
+    <span class="o">|&gt;</span> <span class="i">Chart</span><span class="o">.</span><span class="i">Map</span>
+    <span class="o">|&gt;</span> <span class="i">Chart</span><span class="o">.</span><span class="i">WithOptions</span> (<span class="i">Options</span>(<span class="i">showTip</span> <span class="o">=</span> <span class="k">true</span>))
+    <span class="o">|&gt;</span> <span class="i">Chart</span><span class="o">.</span><span class="i">WithHeight</span> <span class="n">420</span>
+    <span class="o">|&gt;</span> <span class="i">Chart</span><span class="o">.</span><span class="i">Show</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+Call showMap.<br/>
+Since we are retrieving one or more location results, let's show them on a map.<br/>
+It's easier for the human mind to comprehend a visualization rather than a table<br/>
+of data, so rendering a chart can quickly help you zero in on the objective<br/>
+of the search.<br/>
+Using data you've retrieved from the transform function, call the showMap function.<br/>
+What do you see? <br/>
+</aside>
+</section>
+<section >
+<h4>Energy Use per Country</h4>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l"> 1: </span>
+<span class="l"> 2: </span>
+<span class="l"> 3: </span>
+<span class="l"> 4: </span>
+<span class="l"> 5: </span>
+<span class="l"> 6: </span>
+<span class="l"> 7: </span>
+<span class="l"> 8: </span>
+<span class="l"> 9: </span>
+<span class="l">10: </span>
+<span class="l">11: </span>
+<span class="l">12: </span>
+<span class="l">13: </span>
+<span class="l">14: </span>
+<span class="l">15: </span>
+<span class="l">16: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">showEnergyUse</span> (<span class="i">data</span><span class="o">:</span><span class="i">LocationResult</span> <span class="i">list</span>) <span class="o">=</span>
+    <span class="k">let</span> <span class="i">labels</span>, <span class="i">plots</span> <span class="o">=</span>
+        <span class="i">data</span>
+        <span class="o">|&gt;</span> <span class="i">List</span><span class="o">.</span><span class="i">choose</span> (<span class="k">fun</span> <span class="i">x</span> <span class="k">-&gt;</span>
+            <span class="k">match</span> <span class="i">x</span><span class="o">.</span><span class="i">EnergyUse</span> <span class="k">with</span>
+            | <span class="i">Some</span> <span class="i">energyUse</span> <span class="k">-&gt;</span> <span class="i">Some</span>(<span class="i">x</span><span class="o">.</span><span class="i">Country</span>, <span class="i">energyUse</span>)
+            | <span class="i">None</span> <span class="k">-&gt;</span> <span class="i">None</span>)
+        <span class="o">|&gt;</span> <span class="i">List</span><span class="o">.</span><span class="i">distinctBy</span> <span class="i">fst</span>
+        <span class="o">|&gt;</span> <span class="i">List</span><span class="o">.</span><span class="i">map</span> (<span class="k">fun</span> (<span class="i">country</span>, <span class="i">energyUse</span>) <span class="k">-&gt;</span>
+            <span class="i">country</span>, [<span class="k">for</span> <span class="i">y</span> <span class="k">in</span> <span class="n">1960..</span><span class="n">2010</span> <span class="k">-&gt;</span> <span class="i">string</span> <span class="i">y</span>, <span class="i">energyUse</span><span class="o">.</span>[<span class="i">y</span>]])
+        <span class="o">|&gt;</span> <span class="i">List</span><span class="o">.</span><span class="i">unzip</span>
+    <span class="i">plots</span>
+    <span class="o">|&gt;</span> <span class="i">Chart</span><span class="o">.</span><span class="i">Line</span>
+    <span class="o">|&gt;</span> <span class="i">Chart</span><span class="o">.</span><span class="i">WithOptions</span> (<span class="i">Options</span>(<span class="i">title</span> <span class="o">=</span> <span class="s">&quot;Energy use per capita&quot;</span>))
+    <span class="o">|&gt;</span> <span class="i">Chart</span><span class="o">.</span><span class="i">WithLabels</span> <span class="i">labels</span>
+    <span class="o">|&gt;</span> <span class="i">Chart</span><span class="o">.</span><span class="i">Show</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+Next, let's write a function that will take the energy use data we<br/>
+retrieved and render it in a line graph.<br/>
+</aside>
+</section>
+<section >
+<h3>Add this to <code>run</code></h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">run</span> <span class="i">city</span> <span class="o">=</span>
+    <span class="k">let</span> <span class="i">data</span> <span class="o">=</span> (<span class="i">extract</span> <span class="o">&gt;</span><span class="o">&gt;</span> <span class="i">transform</span>) <span class="i">city</span>
+    <span class="i">load</span> <span class="i">data</span>
+    <span class="i">showMap</span> <span class="i">data</span>
+    <span class="i">showEnergyUse</span> <span class="i">data</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+Let's add this to our run function so that we plot out the charts whenever<br/>
+the data set is retrieved. This will act as a visual cue that we have<br/>
+the correct data set. Feel free to add in any tests you created, as well.<br/>
+Try entering different locations into your interactive session and report<br/>
+on what you are seeing. "San Francisco" is quite interesting.<br/>
+</aside>
+</section>
+</section>
+<section >
+<section >
 <h2>Accessing Command Line Parameters</h2>
+<aside class="notes">
+We have not yet left scripts, yet we are also not done with our possibilities<br/>
+for practically leveraging scripts. So far we have been running whatever is<br/>
+defined in the script file. What if we want to run the script but parameterize<br/>
+it from the command line?<br/>
+</aside>
+</section>
+<section >
+<h3>PowerShell Wrappers</h3>
+<aside class="notes">
+My company currently has several F# scripts that are wrapped by PowerShell.<br/>
+The scripts work great, and we used PowerShell to provide better tab-completion.<br/>
+The PowerShell works fine, but I wondered whether F# could do it all.<br/>
+</aside>
+</section>
+<section >
+<h3>Argu</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">open</span> <span class="i">Argu</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+Argu is a terrific library that provides features for parsing command line arguments,<br/>
+defining command line arguments, defining subcommands, and printing CLI help.<br/>
+Arguu can also be used from a script file!<br/>
+</aside>
+</section>
+<section >
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+<span class="l">7: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">type</span> <span class="i">Arguments</span> <span class="o">=</span>
+    | [&lt;<span class="i">Mandatory</span>&gt;] <span class="i">City</span> <span class="k">of</span> <span class="i">string</span>
+    <span class="k">with</span>
+    <span class="k">interface</span> <span class="i">IArgParserTemplate</span> <span class="k">with</span>
+        <span class="k">member</span> <span class="i">this</span><span class="o">.</span><span class="i">Usage</span> <span class="o">=</span>
+            <span class="k">match</span> <span class="i">this</span> <span class="k">with</span>
+            | <span class="i">City</span> _ <span class="k">-&gt;</span> <span class="s">&quot;Enter a location name&quot;</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+Let's define the expected arguments. We expect a City that is of type string.<br/>
+The City parameter is mandatory. By default, this translates to `--city` on the CLI.<br/>
+The IArgParserTemplate is a required interface for working with Argu and provides<br/>
+the content displayed in the --help.<br/>
+</aside>
+</section>
+<section >
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+<span class="l">5: </span>
+<span class="l">6: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">runCLI</span> <span class="i">args</span> <span class="o">=</span>
+    <span class="c">//let args = [|&quot;Map.fsx&quot;;&quot;--city&quot;;&quot;Adelaide&quot;|].[1..]</span>
+    <span class="k">let</span> <span class="i">argParser</span> <span class="o">=</span> <span class="i">ArgumentParser</span><span class="o">.</span><span class="i">Create</span><span class="o">&lt;</span><span class="i">Arguments</span><span class="o">&gt;</span>(<span class="i">errorHandler</span> <span class="o">=</span> <span class="i">ProcessExiter</span>())
+    <span class="k">let</span> <span class="i">argResults</span> <span class="o">=</span> <span class="i">argParser</span><span class="o">.</span><span class="i">Parse</span>(<span class="i">args</span>)
+    <span class="k">let</span> <span class="i">city</span> <span class="o">=</span> <span class="i">argResults</span><span class="o">.</span><span class="i">GetResult</span> &lt;@ <span class="i">City</span> @&gt;
+    <span class="i">run</span> <span class="i">city</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+Next, let's use the Argu parser to extract values.<br/>
+I'm defining the errorHandler as a ProcessHandler to shut down<br/>
+any environments thtat break for some reason.<br/>
+Ultimately, we want to retrieve the City value and pass it along<br/>
+to run to execute our ETL and visualization code.<br/>
+That is all well and good, but how do you retrieve the command line<br/>
+arguments initially?<br/>
+</aside>
+</section>
+<section >
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="k">let</span> <span class="i">args</span> <span class="o">=</span> <span class="i">fsi</span><span class="o">.</span><span class="i">CommandLineArgs</span><span class="o">.</span>[<span class="n">1..</span>]
+<span class="i">runCLI</span> <span class="i">args</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+The fsi object has several useful properties, one of which is<br/>
+`fsi.CommandLinArgs`. This can be used to retrieve the CLI args<br/>
+for a script. However, make sure to trim off the first index,<br/>
+as that should include the name of the file read<br/>
+</aside>
+</section>
+<section >
+<h3>Run App.fsx with --city</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="o">$</span> <span class="i">fsharpi</span> <span class="i">exercises</span><span class="o">/</span><span class="i">App</span><span class="o">.</span><span class="i">fsx</span> <span class="o">--</span><span class="i">city</span> <span class="i">Houston</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+Run your script now? What do you see? You should see two graphs opened in<br/>
+a web browser. You should also still see your generated CSV files.<br/>
+</aside>
+</section>
+<section >
+<h3>Paket.fsx</h3>
+<table class="pre"><tr><td class="lines"><pre class="fssnip"><span class="l">1: </span>
+<span class="l">2: </span>
+<span class="l">3: </span>
+<span class="l">4: </span>
+</pre></td>
+<td class="snippet"><pre class="fssnip highlighted"><code lang="fsharp"><span class="prep">#load</span> <span class="s">&quot;../exercises/Paket.fsx&quot;</span>
+<span class="i">Paket</span><span class="o">.</span><span class="i">download</span>()
+<span class="i">Paket</span><span class="o">.</span><span class="i">restore</span>()
+<span class="i">Paket</span><span class="o">.</span><span class="i">generateLoadScripts</span> <span class="s">&quot;net461&quot;</span>
+</code></pre></td>
+</tr>
+</table>
+<aside class="notes">
+Take a look at exercises/Paket.fsx. Note that this exercises/ folder<br/>
+has no special requirements except to verify that the script is valid. <br/>
+The above commands wrap the paket.exe command line executable.<br/>
+If we enter this toward the top of the script file, we will be able<br/>
+to effectively deploy and run everything necessary to run the script.<br/>
+<blockquote>
+<p>Take this opportunity to re-run the entire script.<br/>
+</aside></p>
+</blockquote>
+</section>
 </section>
 <section >
 <section >
@@ -1945,27 +2196,6 @@ As an example, this slide deck is build using an F# script and FsReveal.<br/>
 </section>
 <section >
 <h1>Questions?</h1>
-</section>
-<section >
-<section >
-<h3>Communicating</h3>
-<ol>
-<li><a href="http://fsprojects.github.io/ProjectScaffold/">Documentation</a></li>
-<li><a href="http://fsprojects.github.io/FSharp.Formatting/literate.html">Literate programming</a></li>
-</ol>
-</section>
-<section >
-<h3>Scheduled Tasks</h3>
-</section>
-<section >
-<h3>Current Directory</h3>
-<aside class="notes">
-When running F# interactive, the current directory is often<br/>
-not what you think.<br/>
-Try running `System.Environment.CurrentDirectory` and see<br/>
-what FSI returns.<br/>
-</aside>
-</section>
 </section>
 
 
