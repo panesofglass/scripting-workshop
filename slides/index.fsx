@@ -127,14 +127,28 @@ let setCwd dir =
 
 ## Getting Started
 
-![ecstasy](images/ecstasy.png)
+https://github.com/panesofglass/scripting-workshop
 
+' Please go to GitHub and pull down the scripting-workshop repository.
 ' In order to begin, you must have F# installed. I assume you have installed
 ' it already, but if not, please go to http://fsharp.org/ to find the instructions
 ' for your environment, or ask for help as we begin the first exercise.
 ' F# Interactive can be run from the command line or from several IDEs and
 ' text editors. To begin, please find the correct command line executable
 ' for your environment. We are going to start simply using the CLI tool for now.
+
+---
+
+### Scripting Workshop
+
+    /scripting-workshop
+      /.paket        <- Paket related
+      /completed     <- in case you get stuck
+      /exercises     <- working directory
+      /slides        <- ignore
+      - paket.dependencies
+      - paket.lock
+      - ... other files 
 
 ---
 
