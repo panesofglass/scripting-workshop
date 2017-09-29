@@ -1492,13 +1492,208 @@ Tests.runTests defaultConfig allTests
 
 ## Visualizing Data Sets
 
+### [XPlot](https://tahahachana.github.io/XPlot/)
+
 *)
 
+open XPlot.GoogleCharts
+
 (**
+
+' One of the benefits of scripts is being able to print out charts.
+' XPlot provides several options, including GoogleCharts and Plotly.
+' We'll use the GoogleCharts library for our sample app.
+
+---
+
+![ecstasy](images/ecstasy.png)
+
+---
+
+### Show Locations
+
+*)
+
+let showMap (data:LocationResult list) =
+    data
+    |> List.map (fun x -> x.Latitude, x.Longitude, x.DisplayName)
+    |> Chart.Map
+    |> Chart.WithOptions (Options(showTip = true))
+    |> Chart.WithHeight 420
+    |> Chart.Show
+
+(**
+
+' Call showMap.
+' Since we are retrieving one or more location results, let's show them on a map.
+' It's easier for the human mind to comprehend a visualization rather than a table
+' of data, so rendering a chart can quickly help you zero in on the objective
+' of the search.
+' Using data you've retrieved from the transform function, call the showMap function.
+' What do you see? 
+
+---
+
+#### Energy Use per Country
+
+*)
+
+let showEnergyUse (data:LocationResult list) =
+    let labels, plots =
+        data
+        |> List.choose (fun x ->
+            match x.EnergyUse with
+            | Some energyUse -> Some(x.Country, energyUse)
+            | None -> None)
+        |> List.distinctBy fst
+        |> List.map (fun (country, energyUse) ->
+            country, [for y in 1960..2010 -> string y, energyUse.[y]])
+        |> List.unzip
+    plots
+    |> Chart.Line
+    |> Chart.WithOptions (Options(title = "Energy use per capita"))
+    |> Chart.WithLabels labels
+    |> Chart.Show
+
+(**
+
+' Next, let's write a function that will take the energy use data we
+' retrieved and render it in a line graph.
+
+---
+
+### Add this to `run`
+
+*)
+
+let run city =
+    let data = (extract >> transform) city
+    load data
+    showMap data
+    showEnergyUse data
+
+(**
+
+' Let's add this to our run function so that we plot out the charts whenever
+' the data set is retrieved. This will act as a visual cue that we have
+' the correct data set. Feel free to add in any tests you created, as well.
+' Try entering different locations into your interactive session and report
+' on what you are seeing. "San Francisco" is quite interesting.
 
 ***
 
 ## Accessing Command Line Parameters
+
+' We have not yet left scripts, yet we are also not done with our possibilities
+' for practically leveraging scripts. So far we have been running whatever is
+' defined in the script file. What if we want to run the script but parameterize
+' it from the command line?
+
+---
+
+### PowerShell Wrappers
+
+' My company currently has several F# scripts that are wrapped by PowerShell.
+' The scripts work great, and we used PowerShell to provide better tab-completion.
+' The PowerShell works fine, but I wondered whether F# could do it all.
+
+---
+
+### Argu
+
+*)
+
+open Argu
+
+(**
+
+' Argu is a terrific library that provides features for parsing command line arguments,
+' defining command line arguments, defining subcommands, and printing CLI help.
+' Arguu can also be used from a script file!
+
+---
+
+*)
+
+type Arguments =
+    | [<Mandatory>] City of string
+    with
+    interface IArgParserTemplate with
+        member this.Usage =
+            match this with
+            | City _ -> "Enter a location name"
+
+(**
+
+' Let's define the expected arguments. We expect a City that is of type string.
+' The City parameter is mandatory. By default, this translates to `--city` on the CLI.
+' The IArgParserTemplate is a required interface for working with Argu and provides
+' the content displayed in the --help.
+
+---
+
+*)
+
+let runCLI args =
+    //let args = [|"Map.fsx";"--city";"Adelaide"|].[1..]
+    let argParser = ArgumentParser.Create<Arguments>(errorHandler = ProcessExiter())
+    let argResults = argParser.Parse(args)
+    let city = argResults.GetResult <@ City @>
+    run city
+
+(**
+
+' Next, let's use the Argu parser to extract values.
+' I'm defining the errorHandler as a ProcessHandler to shut down
+' any environments thtat break for some reason.
+' Ultimately, we want to retrieve the City value and pass it along
+' to run to execute our ETL and visualization code.
+' That is all well and good, but how do you retrieve the command line
+' arguments initially?
+
+---
+
+*)
+
+let args = fsi.CommandLineArgs.[1..]
+runCLI args
+
+(**
+
+' The fsi object has several useful properties, one of which is
+' `fsi.CommandLinArgs`. This can be used to retrieve the CLI args
+' for a script. However, make sure to trim off the first index,
+' as that should include the name of the file read
+
+---
+
+### Run App.fsx with --city
+
+    $ fsharpi exercises/App.fsx --city Houston
+
+' Run your script now? What do you see? You should see two graphs opened in
+' a web browser. You should also still see your generated CSV files.
+
+---
+
+### Paket.fsx
+
+*)
+
+#load "../exercises/Paket.fsx"
+Paket.download()
+Paket.restore()
+Paket.generateLoadScripts "net461"
+
+(**
+
+' Take a look at exercises/Paket.fsx. Note that this exercises/ folder
+' has no special requirements except to verify that the script is valid. 
+' The above commands wrap the paket.exe command line executable.
+' If we enter this toward the top of the script file, we will be able
+' to effectively deploy and run everything necessary to run the script.
+' > Take this opportunity to re-run the entire script.
+
 
 ***
 
@@ -1564,25 +1759,5 @@ Tests.runTests defaultConfig allTests
 ***
 
 # Questions?
-
-***
-
-### Communicating
-
-1. [Documentation](http://fsprojects.github.io/ProjectScaffold/)
-3. [Literate programming](http://fsprojects.github.io/FSharp.Formatting/literate.html)
-
----
-
-### Scheduled Tasks
- 
----
-
-### Current Directory
-
-' When running F# interactive, the current directory is often
-' not what you think.
-' Try running `System.Environment.CurrentDirectory` and see
-' what FSI returns.
 
 *)

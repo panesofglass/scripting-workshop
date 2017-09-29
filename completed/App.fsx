@@ -143,7 +143,7 @@ let run city =
 // CLI
 
 type Arguments =
-    | City of string
+    | [<Mandatory>] City of string
     with
     interface IArgParserTemplate with
         member this.Usage =
