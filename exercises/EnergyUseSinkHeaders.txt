@@ -1,1 +1,1 @@
-CountryCode (string),EnergyUse (float)
+CountryCode (string),Year (int),EnergyUse (float)
