@@ -1562,6 +1562,22 @@ let showEnergyUse (data:LocationResult list) =
 
 ---
 
+' Custom Printers
+
+*)
+
+fsi.AddPrinter(fun (chart:XPlot.GoogleCharts.GoogleChart) ->
+   chart |> Chart.Show
+   "Google Chart")
+
+(**
+
+' F# Interactive allows you to define custom printers. These are most
+' common in validating data sets and UIs. We can now remove the calls
+' to Chart.Show above.
+
+---
+
 ### Add this to `run`
 
 *)
@@ -1693,7 +1709,18 @@ Paket.generateLoadScripts "net461"
 ' If we enter this toward the top of the script file, we will be able
 ' to effectively deploy and run everything necessary to run the script.
 ' > Take this opportunity to re-run the entire script.
+' If you have correctly set your default paths, you should do so.
+' You  don't remember ever haing to figur.
 
+---
+
+### Reconciliation
+
+    fsharpi ./exercises/App.fsx --client Adelaide
+
+' You can now specify the city from the command line. This allows us to
+' pull off program data and turn it into something interesting for Tachyus.
+'
 
 ***
 
