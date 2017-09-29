@@ -44,6 +44,7 @@ let setCwd dir =
 ' In this workshop, we will build a simple ETL application. Along the
 ' way, I'll highlight the challenging areas and provide solutions for
 ' overcoming them.
+' Show the completed script running.
 
 ---
 
@@ -498,6 +499,22 @@ open Library
 ' Alternatively, you could provide a namespace in `Library.fs`, which is
 ' more practical since you'll want that if you plan to use it in a library
 ' or executable.
+
+---
+
+### Library.fs
+
+    S:\scripting-workshop\exercises\Library.fs(1,1): error FS0222:
+    Files in libraries or multiple-file applications must begin
+    with a namespace or module declaration, e.g. 'namespace SomeNamespace.SubNamespace'
+    or 'module SomeNamespace.SomeModule'. Only the last source file
+    of an application may omit such a declaration.
+
+    namespace Library
+
+' If you try to run Script.fsx from the command line, you'll see this error.
+' .fs files _should_ have a namespace or module, so go ahead and add
+' namespace Library to the top to resolve this error.
 
 ---
 
@@ -1574,11 +1591,11 @@ fsi.AddPrinter(fun (chart:XPlot.GoogleCharts.GoogleChart) ->
 
 ' F# Interactive allows you to define custom printers. These are most
 ' common in validating data sets and UIs. We can now remove the calls
-' to Chart.Show above.
+' to Chart.Show above, so long as the chart is the last thing returned.
 
 ---
 
-### Add this to `run`
+### Add show* to `run`
 
 *)
 
@@ -1591,8 +1608,10 @@ let run city =
 (**
 
 ' Let's add this to our run function so that we plot out the charts whenever
-' the data set is retrieved. This will act as a visual cue that we have
-' the correct data set. Feel free to add in any tests you created, as well.
+' the data set is retrieved. Make sure you restore the |> Chart.Show in the
+' show functions or they won't display.
+' This will act as a visual cue that we have the correct data set.
+' Feel free to add in any tests you created, as well.
 ' Try entering different locations into your interactive session and report
 ' on what you are seeing. "San Francisco" is quite interesting.
 
@@ -1616,6 +1635,8 @@ let run city =
 ---
 
 ### Argu
+
+![Argu](images/argu-logo.png)
 
 *)
 
@@ -1669,6 +1690,41 @@ let runCLI args =
 
 ---
 
+### fsi.CommandLineArgs
+
+*)
+
+runCLI fsi.CommandLineArgs
+
+(**
+
+    $ fsharpi exercises/App.fsx --city 'San Francisco'
+
+' You can access the command line args in a script using fsi.CommandLineArgs.
+' Try running our program above using runCLI fsi.CommandLineArgs
+' What do you get?
+
+---
+
+![agony](images/agony.png)
+
+---
+
+    ERROR: unrecognized argument: '.\exercises\App.fsx'.
+    USAGE: fsiAnyCPU.exe [--help] --city <string>
+
+    OPTIONS:
+
+        --city <string>       Enter a location name
+        --help                display this list of options.
+
+' When you run your script like an application, the script file becomes
+' one of the arguments. So you need to strip this argument off the top.
+
+---
+
+### fsi.CommandLineArgs
+
 *)
 
 let args = fsi.CommandLineArgs.[1..]
@@ -1689,6 +1745,10 @@ runCLI args
 
 ' Run your script now? What do you see? You should see two graphs opened in
 ' a web browser. You should also still see your generated CSV files.
+
+---
+
+![ecstasy](images/ecstasy.png)
 
 ---
 
@@ -1714,12 +1774,12 @@ Paket.generateLoadScripts "net461"
 
 ---
 
-### Reconciliation
+### 
 
     fsharpi ./exercises/App.fsx --client Adelaide
 
 ' You can now specify the city from the command line. This allows us to
-' pull off program data and turn it into something interesting for Tachyus.
+' pull off program data and turn it into something interesting.
 '
 
 ***
@@ -1760,31 +1820,28 @@ Paket.generateLoadScripts "net461"
 
 ' As noted earlier, we are not able to go into the details of each option, 
 ' but I want you at least be aware of some of the options available.
+' As an example, this slide deck is built using a FAKE script and FsReveal,
+' which uses FSharp.Formatting.
 
----
+[<img alt="FsReveal" src="images/logo.png" class="logo" />](http://fsprojects.github.io/FsReveal/)
 
-### [Jupyter Notebooks](http://bayardrock.github.io/IfSharp/)
+[<img alt="FAKE" src="images/fake.png" class="logo" />](https://fake.build/)
 
----
+[<img alt="Jupyter Notebooks" src="images/jupyter.png" class="logo" />](http://bayardrock.github.io/IfSharp/)
 
-### [Azure Notebooks](https://blogs.msdn.microsoft.com/visualstudio/2016/12/05/azure-notebooks-now-support-f/)
+[<img alt="Azure Notebooks" src="images/azure-notebooks.jpg" class="logo" />](https://blogs.msdn.microsoft.com/visualstudio/2016/12/05/azure-notebooks-now-support-f/)
 
----
+[<img alt="Azure Functions" src="images/Azure-Functions-Logo.png" class="logo" />](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-fsharp)
 
-### [Azure Functions](https://docs.microsoft.com/en-us/azure/azure-functions/functions-reference-fsharp)
-
----
-
-### [AWS Lambda](https://github.com/FSharpBristol/FSharp-Template-for-Aws-Lambda)
-
----
-
-### [FsReveal slides](http://fsprojects.github.io/FsReveal/)
-
-' As an example, this slide deck is build using an F# script and FsReveal.
+[<img alt="AWS Lambda" src="images/aws-lambda.png" class="logo" />](https://github.com/FSharpBristol/FSharp-Template-for-Aws-Lambda)
 
 ***
 
-# Questions?
+# Summary
+
+<img alt="ecstasy" src="images/ecstasy.png" class="image-row" />
+<img alt="agony" src="images/agony.png" class="image-row" />
+
+' 
 
 *)
